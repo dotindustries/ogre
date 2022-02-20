@@ -13,20 +13,33 @@ export interface VersionControlledObject<T> {
 
   gotoLastVersion(): boolean
 
+  // only for internal use. do not expose to custoemrs.
+  // Customer should use commit/checkout logic
   gotoVersion(newVersion: number): boolean
 
+  // The current object version, which we are on
   getVersion(): number
 
+  // The current commit, which we are on.
+  // It returns undefined, when the current version is not associated with a commit yet
+  head(): Commit | undefined
+
   commit(message: string): string
+
+  checkout(hash: string): void
 
   logs(commits?: number): void
 }
 
-export const VersionControlled = function <T extends { [k: PropertyKey]: any }>(this: VersionControlledObject<T>, obj: T, changeLog: Change[] = []) {
+export const VersionControlled = function <T extends { [k: PropertyKey]: any }>(
+  this: VersionControlledObject<T>,
+  obj: T,
+  history?: History) {
   let savedLength: number | undefined
   let version = 0
+  const changeLog = history?.changeLog ?? []
   const targets: any[] = []
-  const commits: Commit[] = []
+  const commits: Commit[] = history?.commits ?? []
   const hash: Map<T, any[]> = new Map([[obj, []]])
   const handler = {
     get: function(target: T, property: PropertyKey): any {
@@ -148,15 +161,25 @@ export const VersionControlled = function <T extends { [k: PropertyKey]: any }>(
   }
 
   this.getVersion = () => version
+  this.head = () => {
+    return commits.find(c => c.to === version)
+  }
   this.getChangeLog = () => [...changeLog]
   this.getHistory = (): History => {
-    // only send back shallow copies
-    return { changeLog: [...changeLog], commits: [...commits] }
+    // only send back shallow copies of changelog and commits up to current version
+    return { changeLog: [...changeLog.slice(undefined, version)], commits: [...commits.filter(c => c.to <= version)] }
   }
   this.commit = commit
+  this.checkout = hash => {
+    const commit = commits.find(c => c.hash === hash)
+    if (!commit) {
+      throw new Error(`commit (${hash}) does not belong to repository`)
+    }
+    gotoVersion(commit.to)
+  }
   // apply change log on construction
   gotoLastVersion()
-} as any as { new<T>(obj: T, changeLog?: Change[]): VersionControlledObject<T> }
+} as any as { new<T>(obj: T, history?: History): VersionControlledObject<T> }
 
 export function printChangeLog(vcobj: VersionControlledObject<any>, upTo?: number) {
   console.log('----------------------------------------------------------')

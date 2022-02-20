@@ -24,7 +24,7 @@ export interface Commit {
   // ```
   // const changes = changeLog.slice(commit.from, commit.to)
   // ```
-  to: number | undefined
+  to: number
   timestamp: Date
   message: string | undefined
 }

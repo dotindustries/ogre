@@ -1,10 +1,19 @@
 {
   "name": "versioning",
   "version": "0.0.0",
+  "private": true,
   "description": "Version Control library",
   "main": "src/index.ts",
+  "types": "src/index.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsc --build",
+    "build.watch": "tsc --build --watch",
+    "test": "ava ./lib/test-*.js",
+    "test.watch": "ava --watch ./lib/test-*.js"
+  },
+  "ava": {
+    "timeout": "60s",
+    "concurrency": 1
   },
   "author": "János Veres @nadilas",
   "license": "MIT",
@@ -14,7 +23,9 @@
   "devDependencies": {
     "typescript": "^4.5.5",
     "@types/object-hash": "^2.2.1",
-    "tsconfig": "*",
+    "@types/uuid": "^8.3.4",
+    "uuid": "^8.3.2",
+    "ava": "^4.0.1",
     "config": "*"
   }
 }
