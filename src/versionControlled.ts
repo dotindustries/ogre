@@ -6,6 +6,11 @@ export interface VersionControlledObjectType {
   new<T>(obj: T, options: VersionControllerOptions<T>): VersionControlledObject<T>
 }
 
+export interface VersionControllerOptions<T> {
+  history?: History,
+  TCreator?: new() => T
+}
+
 export interface VersionControlledObject<T> {
   data: T;
 
@@ -42,11 +47,6 @@ export interface VersionControlledObject<T> {
   branch(): [VersionControlledObject<T>, T]
 
   merge(source: VersionControlledObject<T> | History): string
-}
-
-export interface VersionControllerOptions<T> {
-  history?: History,
-  TCreator?: new() => T
 }
 
 export const VersionControlled = function <T extends { [k: PropertyKey]: any }>(
@@ -106,7 +106,9 @@ export const VersionControlled = function <T extends { [k: PropertyKey]: any }>(
         delete target[property]
       }
 
-      if (version < newVersion) version++
+      if (version < newVersion) {
+        version++
+      }
     }
 
     return true
@@ -228,25 +230,31 @@ export const VersionControlled = function <T extends { [k: PropertyKey]: any }>(
     return [vc, vc.data]
   }
   this.merge = source => {
-    const src = source instanceof VersionControlled
-      ? source.getHistory()
-      : source
-    const masterHead = src.commits[src.commits.length-1].hash
-
     // inspiration
     // http://think-like-a-git.net
     // also check isomorphic-git
     //   for fancier merge tree
     //   https://github.com/isomorphic-git/isomorphic-git/blob/a623133345a5d8b6bb7a8352ea9702ce425d8266/src/utils/mergeTree.js#L33
+
+    const src = source instanceof VersionControlled
+      ? source.getHistory()
+      : source
+    const srcHead = src.commits[src.commits.length - 1]
+    const masterHead = commits[commits.length - 1]
+
+    if (!srcHead && !masterHead) {
+      throw new Error(`nothing to merge`)
+    }
+
     // no change
     // *---* (master)
     //     |
     //     * (foo)
-    if (masterHead === commits[commits.length-1].hash) {
-      throw new Error(`already at commit: ${masterHead}`)
+    if (masterHead && srcHead && srcHead.hash === masterHead.hash) {
+      throw new Error(`already at commit: ${srcHead.hash}`)
     }
 
-    // todo fast-forward
+    // fast-forward
     // *---* (master)
     //      \
     //       *---*---* (foo)
@@ -254,6 +262,17 @@ export const VersionControlled = function <T extends { [k: PropertyKey]: any }>(
     // *---*
     //      \
     //       *---*---* (master, foo)
+    const indexOfMasterHeadOnSrc = src.commits.indexOf(masterHead)
+    if (masterHead === undefined || indexOfMasterHeadOnSrc > -1) {
+      const commitsToMerge = src.commits.slice(indexOfMasterHeadOnSrc + 1)
+      for (const c of commitsToMerge) {
+        commits.push(c)
+        changeLog.push(...src.changeLog.slice(c.from, c.to))
+      }
+      // let version catch up
+      this.gotoLastVersion()
+      return srcHead.hash // ff to last commit in source
+    }
 
     // todo diverge
     // *---*---* (master)
@@ -264,8 +283,11 @@ export const VersionControlled = function <T extends { [k: PropertyKey]: any }>(
     // *---*---*-------* (master)
     //      \         /
     //       *---*---* (foo)
+    // if (false) {
+    //  throw new Error('diverge not implemented yet')
+    // }
 
-    throw new Error('not implemented yet')
+    throw new Error('unknown merge type: not implemented yet')
   }
   // apply change log at the end of the constructor
   gotoLastVersion()
