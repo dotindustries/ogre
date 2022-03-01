@@ -214,7 +214,19 @@ export const VersionControlled = function <T extends { [k: PropertyKey]: any }>(
     }
     gotoVersion(commit.to)
   }
-  // apply change log on construction
+  this.branch = () => {
+    if (!options.TCreator) {
+      throw new Error(`Cannot branch out, no constructor provided.
+      Please branch manually: new VersionControlled(new T(), {history: vc.getHistory()})`)
+    }
+    const vc = new VersionControlled(
+      new options.TCreator(),
+      { history: this.getHistory(), TCreator: options.TCreator }
+    )
+    return [vc, vc.data]
+  }
+
+  // apply change log at the end of the constructor
   gotoLastVersion()
 } as any as VersionControlledObjectType
 

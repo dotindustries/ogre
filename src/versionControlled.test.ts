@@ -85,6 +85,26 @@ test('reconstruction', t => {
   t.is(vc2.getVersion(), 6, 'incorrect version')
 })
 
+test('merge with 1 commit diff', t => {
+  const { vc: master, wrapped: wrappedObject } = getBaseline()
+
+  updateHeaderData(wrappedObject)
+  master.commit('header data')
+
+  addOneStep(wrappedObject)
+  master.commit('first step')
+
+  // create new branch
+  const [newBranch] = master.branch()
+  t.is(newBranch.getHistory()?.changeLog.length, 6, 'new branch w/ incorrect # of changlog')
+
+  // TODO commit to new branch
+
+  // TODO merge in master branch from new branch
+
+  // TODO verify master history, git log and changelog
+})
+
 test('rewind to header commit', t => {
   const { vc, wrapped } = getBaseline()
 
