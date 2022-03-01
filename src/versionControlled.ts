@@ -40,6 +40,8 @@ export interface VersionControlledObject<T> {
   // 2. constructing a new VersionControlled object with the new instance
   //    passing in the history of the current instance
   branch(): [VersionControlledObject<T>, T]
+
+  merge(source: VersionControlledObject<T> | History): string
 }
 
 export interface VersionControllerOptions<T> {
@@ -225,7 +227,46 @@ export const VersionControlled = function <T extends { [k: PropertyKey]: any }>(
     )
     return [vc, vc.data]
   }
+  this.merge = source => {
+    const src = source instanceof VersionControlled
+      ? source.getHistory()
+      : source
+    const masterHead = src.commits[src.commits.length-1].hash
 
+    // inspiration
+    // http://think-like-a-git.net
+    // also check isomorphic-git
+    //   for fancier merge tree
+    //   https://github.com/isomorphic-git/isomorphic-git/blob/a623133345a5d8b6bb7a8352ea9702ce425d8266/src/utils/mergeTree.js#L33
+    // no change
+    // *---* (master)
+    //     |
+    //     * (foo)
+    if (masterHead === commits[commits.length-1].hash) {
+      throw new Error(`already at commit: ${masterHead}`)
+    }
+
+    // todo fast-forward
+    // *---* (master)
+    //      \
+    //       *---*---* (foo)
+    // result:
+    // *---*
+    //      \
+    //       *---*---* (master, foo)
+
+    // todo diverge
+    // *---*---* (master)
+    //      \
+    //       *---*---* (foo)
+    // result:
+    //                 ↓
+    // *---*---*-------* (master)
+    //      \         /
+    //       *---*---* (foo)
+
+    throw new Error('not implemented yet')
+  }
   // apply change log at the end of the constructor
   gotoLastVersion()
 } as any as VersionControlledObjectType

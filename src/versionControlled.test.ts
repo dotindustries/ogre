@@ -1,21 +1,11 @@
 import test from 'ava'
-import { v4 as uuid4 } from 'uuid'
 import { VersionControlled } from './versionControlled'
+import { addOneStep, getBaseline, updateHeaderData } from './test.utils'
 import { templates } from 'proto/lib/lumen'
 import ProcessTemplate = templates.ProcessTemplate
-import ProcessStep = templates.ProcessStep
-import ProcessElement = templates.ProcessElement
-
-function getBaseline() {
-  const template = new ProcessTemplate()
-  const vc = new VersionControlled<ProcessTemplate>(template, {TCreator: ProcessTemplate})
-  const wrapped = vc.data
-  const hash = vc.commit('baseline')
-  return { vc, wrapped, hash }
-}
 
 test('baseline with 1 commit and zero changelog entries', t => {
-  const { vc } = getBaseline()
+  const [ vc ] = getBaseline()
 
   const history = vc.getHistory()
   t.is(history.changeLog.length, 0, 'has changelog entries')
@@ -23,24 +13,8 @@ test('baseline with 1 commit and zero changelog entries', t => {
   t.is(vc.getVersion(), 0, 'incorrect version')
 })
 
-function updateHeaderData(wrapped: templates.ProcessTemplate) {
-  wrapped.name = 'my first process template'
-  wrapped.description = 'now we have a description'
-  wrapped.uuid = uuid4()
-}
-
-function addOneStep(wrapped: templates.ProcessTemplate) {
-  const pe = new ProcessElement()
-  pe.step = new ProcessStep()
-  pe.step.uuid = uuid4()
-  pe.step.name = 'first step name'
-
-  wrapped.process.push(pe)
-  wrapped.process[0].step!.name = 'new name'
-}
-
 test('two commits with 3 changes', t => {
-  const { vc, wrapped } = getBaseline()
+  const [ vc, wrapped ] = getBaseline()
 
   updateHeaderData(wrapped)
   vc.commit('header data')
@@ -52,7 +26,7 @@ test('two commits with 3 changes', t => {
 })
 
 test('array push double-change, 6 changes, 3 commits', t => {
-  const { vc, wrapped } = getBaseline()
+  const [ vc, wrapped ] = getBaseline()
 
   updateHeaderData(wrapped)
   vc.commit('header data')
@@ -67,7 +41,7 @@ test('array push double-change, 6 changes, 3 commits', t => {
 })
 
 test('reconstruction', t => {
-  const { vc, wrapped } = getBaseline()
+  const [ vc, wrapped ] = getBaseline()
 
   updateHeaderData(wrapped)
   vc.commit('header data')
@@ -77,7 +51,7 @@ test('reconstruction', t => {
 
   // start reconstruction
   const p = new ProcessTemplate()
-  const vc2 = new VersionControlled(p, {history: vc.getHistory()})
+  const vc2 = new VersionControlled(p, { history: vc.getHistory() })
 
   const history = vc2.getHistory()
   t.is(history.changeLog.length, 6, 'incorrect # of changelog entries')
@@ -85,28 +59,8 @@ test('reconstruction', t => {
   t.is(vc2.getVersion(), 6, 'incorrect version')
 })
 
-test('merge with 1 commit diff', t => {
-  const { vc: master, wrapped: wrappedObject } = getBaseline()
-
-  updateHeaderData(wrappedObject)
-  master.commit('header data')
-
-  addOneStep(wrappedObject)
-  master.commit('first step')
-
-  // create new branch
-  const [newBranch] = master.branch()
-  t.is(newBranch.getHistory()?.changeLog.length, 6, 'new branch w/ incorrect # of changlog')
-
-  // TODO commit to new branch
-
-  // TODO merge in master branch from new branch
-
-  // TODO verify master history, git log and changelog
-})
-
 test('rewind to header commit', t => {
-  const { vc, wrapped } = getBaseline()
+  const [ vc, wrapped ] = getBaseline()
 
   updateHeaderData(wrapped)
   const headerHash = vc.commit('header data')
@@ -149,7 +103,7 @@ test('rewind to header commit', t => {
 })
 
 test('rewind to v2 with no referenced commit', t => {
-  const { vc, wrapped } = getBaseline()
+  const [ vc, wrapped ] = getBaseline()
 
   updateHeaderData(wrapped)
   vc.commit('header data')
