@@ -8,12 +8,18 @@
   "scripts": {
     "build": "tsc --build",
     "build.watch": "tsc --build --watch",
-    "test": "ava ./lib/test-*.js",
-    "test.watch": "ava --watch ./lib/test-*.js"
+    "test": "ava ./src/*.test.ts",
+    "test.watch": "ava --watch ./src/*.test.ts"
   },
   "ava": {
     "timeout": "60s",
-    "concurrency": 1
+    "concurrency": 1,
+    "typescript": {
+      "rewritePaths": {
+        "src/": "lib/"
+      },
+      "compile": "tsc"
+    }
   },
   "author": "János Veres @nadilas",
   "license": "MIT",
@@ -26,6 +32,7 @@
     "@types/uuid": "^8.3.4",
     "uuid": "^8.3.2",
     "ava": "^4.0.1",
+    "@ava/typescript": "^3.0.1",
     "config": "*"
   }
 }

@@ -8,13 +8,13 @@ import ProcessElement = templates.ProcessElement
 
 function getBaseline() {
   const template = new ProcessTemplate()
-  const vc = new VersionControlled<ProcessTemplate>(template)
+  const vc = new VersionControlled<ProcessTemplate>(template, {TCreator: ProcessTemplate})
   const wrapped = vc.data
   const hash = vc.commit('baseline')
   return { vc, wrapped, hash }
 }
 
-test('baseline has 1 commit and zero changelog entries', t => {
+test('baseline with 1 commit and zero changelog entries', t => {
   const { vc } = getBaseline()
 
   const history = vc.getHistory()
@@ -67,7 +67,7 @@ test('array push double-change, 6 changes, 3 commits', t => {
 })
 
 test('reconstruction', t => {
-  const {vc, wrapped} = getBaseline()
+  const { vc, wrapped } = getBaseline()
 
   updateHeaderData(wrapped)
   vc.commit('header data')
@@ -77,7 +77,7 @@ test('reconstruction', t => {
 
   // start reconstruction
   const p = new ProcessTemplate()
-  const vc2 = new VersionControlled(p, vc.getHistory())
+  const vc2 = new VersionControlled(p, {history: vc.getHistory()})
 
   const history = vc2.getHistory()
   t.is(history.changeLog.length, 6, 'incorrect # of changelog entries')
@@ -86,7 +86,7 @@ test('reconstruction', t => {
 })
 
 test('rewind to header commit', t => {
-  const {vc, wrapped} = getBaseline()
+  const { vc, wrapped } = getBaseline()
 
   updateHeaderData(wrapped)
   const headerHash = vc.commit('header data')
@@ -97,15 +97,39 @@ test('rewind to header commit', t => {
   vc.checkout(headerHash)
 
   const history = vc.getHistory()
-  t.is(history.changeLog.length, 3, `incorrect # of changelog entries: ${JSON.stringify(history.changeLog, null, '  ')}`)
+  t.is(
+    history.changeLog.length,
+    3,
+    `incorrect # of changelog entries: ${JSON.stringify(
+      history.changeLog,
+      null,
+      '  '
+    )}`
+  )
   t.is(history.commits.length, 2, 'incorrect # of commits')
   const head = vc.head()
-  t.is(head?.hash, headerHash, `we should be at header commit instead of: ${JSON.stringify(head, null, '  ')}`)
-  t.is(vc.getVersion(), 3, `wrong current version: ${JSON.stringify(head, null, '  ')} ${JSON.stringify(history.changeLog, null, '  ')}`)
+  t.is(
+    head?.hash,
+    headerHash,
+    `we should be at header commit instead of: ${JSON.stringify(
+      head,
+      null,
+      '  '
+    )}`
+  )
+  t.is(
+    vc.getVersion(),
+    3,
+    `wrong current version: ${JSON.stringify(
+      head,
+      null,
+      '  '
+    )} ${JSON.stringify(history.changeLog, null, '  ')}`
+  )
 })
 
 test('rewind to v2 with no referenced commit', t => {
-  const {vc, wrapped} = getBaseline()
+  const { vc, wrapped } = getBaseline()
 
   updateHeaderData(wrapped)
   vc.commit('header data')
@@ -116,9 +140,33 @@ test('rewind to v2 with no referenced commit', t => {
   vc.gotoVersion(2)
 
   const history = vc.getHistory()
-  t.is(history.changeLog.length, 2, `incorrect # of changelog entries: ${JSON.stringify(history.changeLog, null, '  ')}`)
+  t.is(
+    history.changeLog.length,
+    2,
+    `incorrect # of changelog entries: ${JSON.stringify(
+      history.changeLog,
+      null,
+      '  '
+    )}`
+  )
   t.is(history.commits.length, 1, 'incorrect # of commits')
   const head = vc.head()
-  t.is(head, undefined, `was not supposed to find a commit for v2: ${JSON.stringify(head, null, '  ')}`)
-  t.is(vc.getVersion(), 2, `wrong current version: ${JSON.stringify(head, null, '  ')} ${JSON.stringify(history.changeLog, null, '  ')}`)
+  t.is(
+    head,
+    undefined,
+    `was not supposed to find a commit for v2: ${JSON.stringify(
+      head,
+      null,
+      '  '
+    )}`
+  )
+  t.is(
+    vc.getVersion(),
+    2,
+    `wrong current version: ${JSON.stringify(
+      head,
+      null,
+      '  '
+    )} ${JSON.stringify(history.changeLog, null, '  ')}`
+  )
 })
