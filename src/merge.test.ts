@@ -1,10 +1,8 @@
 import test from 'ava'
-import { addOneStep, getBaseline, updateHeaderData } from './test.utils'
+import { addOneStep, getBaseline, testAuthor, updateHeaderData } from './test.utils'
 import { Repository } from './repository'
 import { templates } from 'proto/lib/lumen'
 import ProcessTemplate = templates.ProcessTemplate
-
-const testAuthor = 'User name <name@domain.com>'
 
 test('merge with no commit', t => {
   const master = new Repository(new ProcessTemplate(), {TCreator: ProcessTemplate})
@@ -53,7 +51,6 @@ test('merge fast-forward with empty master', async t => {
     t.is(mergeHash, newHead, 'did not fast-forward to expected commit')
     t.is(master.head()?.hash, mergeHash, `head@master is not the expected commit`)
     t.is(master.getHistory().commits.length, masterCommitCount+1, 'fast-forward failed, superfluous commit detected')
-    t.is(master.getVersion(), 2, 'incorrect version after merge')
   }, 'threw unexpected error')
 })
 
@@ -75,14 +72,13 @@ test('merge fast-forward', async t => {
   wrappedObject2.isPublic = true
   wrappedObject2.name = 'new name was necessary'
   const newHead = await newBranch.commit('new name for public use', testAuthor)
-  t.is(newBranch.getVersion(), master.getVersion() + 2, 'incorrect version #')
 
   t.notThrows(() => {
     // merge in master branch from new branch
     const mergeHash = master.merge(newBranch)
 
     t.is(mergeHash, newHead, 'did not fast-forward to expected commit')
-    t.is(master.head()?.hash, mergeHash, `head@master is not the expected commit`)
+    t.is(master.head()?.hash, mergeHash, `head is not the expected commit`)
     t.is(master.getHistory().commits.length, masterCommitCount+1, 'fast-forward failed, superfluous commit detected')
   }, 'threw unexpected error during merge')
 })

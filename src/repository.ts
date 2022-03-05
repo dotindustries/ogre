@@ -15,15 +15,6 @@ export interface RepositoryObject<T> {
 
   getHistory(): History
 
-  gotoLastVersion(): boolean
-
-  // only for internal use. do not expose to custoemrs.
-  // Customer should use commit/checkout logic
-  gotoVersion(newVersion: number): boolean
-
-  // The current object version, which we are on
-  getVersion(): number
-
   // The current commit, which we are on.
   // It returns undefined, when the current version is not associated with a commit yet
   head(): Commit | undefined
@@ -55,6 +46,7 @@ export const Repository = function <T extends { [k: PropertyKey]: any }>(
 ) {
   let savedLength: number | undefined
   let version = 0
+  let head: Commit | undefined
   const changeLog = options.history?.changeLog ?? []
   const targets: any[] = []
   const commits: Commit[] = options.history?.commits ?? []
@@ -149,48 +141,10 @@ export const Repository = function <T extends { [k: PropertyKey]: any }>(
 
   this.data = new Proxy(obj, handler)
 
-  const commit = async (message: string, author: string): Promise<string> => {
-    let parent
-    let from
-    if (commits.length > 0) {
-      parent = commits[commits.length - 1]
-      from = parent.to
-    }
-    if (from == version) {
-      throw new Error(`no changes to commit`)
-    }
-
-    const timestamp = new Date()
-    const changes = changeLog.slice(from, version)
-    const sha = await calculateHash({
-      message,
-      author,
-      changes,
-      parentRef: parent?.hash,
-      timestamp
-    })
-
-    commits.push({
-      hash: sha,
-      message,
-      author,
-      changes: changes,
-      parent: parent?.hash,
-      timestamp,
-      from,
-      to: version
-    })
-
-    return sha
-  }
-
-  this.gotoVersion = gotoVersion
-  this.gotoLastVersion = gotoLastVersion
-
   // region Logs
   this.printChangeLog = (upTo) => {
     console.log('----------------------------------------------------------')
-    console.log(`Changelog at v${this.getVersion()}`)
+    console.log(`Changelog at v${version}`)
     const changeLog = this.getChangeLog()
     for (const [i, chg] of changeLog.entries()) {
       if (upTo && i >= upTo) {
@@ -225,11 +179,12 @@ export const Repository = function <T extends { [k: PropertyKey]: any }>(
   }
  // endregion
 
-  this.getVersion = () => version
   this.head = () => {
-    return commits.find((c) => c.to === version)
+    return head
   }
+
   this.getChangeLog = () => [...changeLog]
+
   this.getHistory = (): History => {
     // only send back shallow copies of changelog and commits up to current version
     return {
@@ -237,13 +192,71 @@ export const Repository = function <T extends { [k: PropertyKey]: any }>(
       commits: [...commits.filter((c) => c.to <= version)]
     }
   }
-  this.commit = commit
-  this.checkout = (hash) => {
-    const commit = commits.find((c) => c.hash === hash)
-    if (!commit) {
-      throw new Error(`commit (${hash}) does not belong to repository`)
+
+  this.commit = async (message: string, author: string): Promise<string> => {
+    let parent = head
+    let from
+    if (parent) {
+      from = parent.to
     }
-    gotoVersion(commit.to)
+    const changesSinceLastCommit = changeLog.slice(parent?.to)
+    if (changesSinceLastCommit.length === 0) {
+      throw new Error(`no changes to commit`)
+    }
+
+    const timestamp = new Date()
+    const changes = [...changesSinceLastCommit]
+    const sha = await calculateHash({
+      message,
+      author,
+      changes,
+      parentRef: parent?.hash,
+      timestamp
+    })
+
+    const commit = {
+      hash: sha,
+      message,
+      author,
+      changes: changes,
+      parent: parent?.hash,
+      timestamp,
+      from,
+      to: version
+    }
+    commits.push(commit)
+
+    // move head
+    head = commit
+
+    return sha
+  }
+  const rebuildChangeLog = (commit: Commit) => {
+    // clear changeLog
+    changeLog.splice(0)
+    let c: Commit | undefined = commit
+    let clog: Change[] = []
+    while (c !== undefined) {
+      clog = [...commit.changes, ...clog]
+      c = commits.find(parent => parent.hash === c?.parent)
+    }
+    changeLog.push(...clog)
+  }
+  this.checkout = (shaish) => {
+    // TODO: accept a shaish expression (e.g. abbrev sha, branch, tag)
+    const commit = commits.find((c) => c.hash === shaish)
+    if (!commit) {
+      throw new Error(`commit (${shaish}) does not belong to repository`)
+    }
+
+    rebuildChangeLog(commit)
+
+    // process new changelog
+    version = 0
+    gotoLastVersion()
+
+    // move head
+    head = commit
   }
   this.branch = () => {
     if (!options.TCreator) {
@@ -296,8 +309,11 @@ export const Repository = function <T extends { [k: PropertyKey]: any }>(
         commits.push(c)
         changeLog.push(...src.changeLog.slice(c.from, c.to))
       }
+      // move head
+      head = commitsToMerge[commitsToMerge.length-1]
+
       // let version catch up
-      this.gotoLastVersion()
+      gotoLastVersion()
       return srcHead.hash // ff to last commit in source
     }
 
