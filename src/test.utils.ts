@@ -3,16 +3,16 @@ import ProcessTemplate = templates.ProcessTemplate
 import ProcessStep = templates.ProcessStep
 import ProcessElement = templates.ProcessElement
 import { v4 as uuid4 } from 'uuid'
-import { VersionControlled, VersionControlledObject } from './versionControlled'
+import { Repository, RepositoryObject } from './repository'
 
 const testAuthor = 'User name <name@domain.com>'
 
-export async function getBaseline(): Promise<[VersionControlledObject<ProcessTemplate>, ProcessTemplate, string]> {
+export async function getBaseline(): Promise<[RepositoryObject<ProcessTemplate>, ProcessTemplate, string]> {
   const template = new ProcessTemplate()
-  const vc = new VersionControlled<ProcessTemplate>(template, { TCreator: ProcessTemplate })
-  const wrapped = vc.data
-  const hash = await vc.commit('baseline', testAuthor)
-  return [vc, wrapped, hash]
+  const repo = new Repository<ProcessTemplate>(template, { TCreator: ProcessTemplate })
+  const wrapped = repo.data
+  const hash = await repo.commit('baseline', testAuthor)
+  return [repo, wrapped, hash]
 }
 
 export function updateHeaderData(wrapped: templates.ProcessTemplate) {

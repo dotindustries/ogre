@@ -1,17 +1,12 @@
 import { Change, History } from './interfaces'
 import { calculateHash, Commit } from './commit'
 
-
-export interface VersionControlledObjectType {
-  new<T>(obj: T, options: VersionControllerOptions<T>): VersionControlledObject<T>
-}
-
-export interface VersionControllerOptions<T> {
+export interface RepositoryOptions<T> {
   history?: History,
   TCreator?: new() => T
 }
 
-export interface VersionControlledObject<T> {
+export interface RepositoryObject<T> {
   data: T
 
   printChangeLog(upTo?: number): void
@@ -44,15 +39,19 @@ export interface VersionControlledObject<T> {
   // 1. creating a new instance of the underlying data type (T)
   // 2. constructing a new VersionControlled object with the new instance
   //    passing in the history of the current instance
-  branch(): [VersionControlledObject<T>, T]
+  branch(): [RepositoryObject<T>, T]
 
-  merge(source: VersionControlledObject<T> | History): string
+  merge(source: RepositoryObject<T> | History): string
 }
 
-export const VersionControlled = function <T extends { [k: PropertyKey]: any }>(
-  this: VersionControlledObject<T>,
+export interface RespositoryObjectType {
+  new<T>(obj: T, options: RepositoryOptions<T>): RepositoryObject<T>
+}
+
+export const Repository = function <T extends { [k: PropertyKey]: any }>(
+  this: RepositoryObject<T>,
   obj: T,
-  options: VersionControllerOptions<T>
+  options: RepositoryOptions<T>
 ) {
   let savedLength: number | undefined
   let version = 0
@@ -190,7 +189,18 @@ export const VersionControlled = function <T extends { [k: PropertyKey]: any }>(
 
   // region Logs
   this.printChangeLog = (upTo) => {
-    printChangeLog(this, upTo)
+    console.log('----------------------------------------------------------')
+    console.log(`Changelog at v${this.getVersion()}`)
+    const changeLog = this.getChangeLog()
+    for (const [i, chg] of changeLog.entries()) {
+      if (upTo && i >= upTo) {
+        return
+      }
+
+      console.log(`  ${JSON.stringify(chg)}`)
+    }
+
+    console.log('----------------------------------------------------------')
   }
   this.logs = (numberOfCommits) => {
     const limit = numberOfCommits ?? -1
@@ -238,13 +248,13 @@ export const VersionControlled = function <T extends { [k: PropertyKey]: any }>(
   this.branch = () => {
     if (!options.TCreator) {
       throw new Error(`Cannot branch out, no constructor provided.
-      Please branch manually: new VersionControlled(new T(), {history: vc.getHistory()})`)
+      Please branch manually: new Repository(new T(), {history: repo.getHistory()})`)
     }
-    const vc = new VersionControlled(
+    const repo = new Repository(
       new options.TCreator(),
       { history: this.getHistory(), TCreator: options.TCreator }
     )
-    return [vc, vc.data]
+    return [repo, repo.data]
   }
   this.merge = source => {
     // inspiration
@@ -253,7 +263,7 @@ export const VersionControlled = function <T extends { [k: PropertyKey]: any }>(
     //   for fancier merge tree
     //   https://github.com/isomorphic-git/isomorphic-git/blob/a623133345a5d8b6bb7a8352ea9702ce425d8266/src/utils/mergeTree.js#L33
 
-    const src = source instanceof VersionControlled
+    const src = source instanceof Repository
       ? source.getHistory()
       : source
     const srcHead = src.commits[src.commits.length - 1]
@@ -308,22 +318,4 @@ export const VersionControlled = function <T extends { [k: PropertyKey]: any }>(
   }
   // apply change log at the end of the constructor
   gotoLastVersion()
-} as any as VersionControlledObjectType
-
-export function printChangeLog(
-  vcobj: VersionControlledObject<any>,
-  upTo?: number
-) {
-  console.log('----------------------------------------------------------')
-  console.log(`Changelog at v${vcobj.getVersion()}`)
-  const changeLog = vcobj.getChangeLog()
-  for (const [i, chg] of changeLog.entries()) {
-    if (upTo && i >= upTo) {
-      return
-    }
-
-    console.log(`  ${JSON.stringify(chg)}`)
-  }
-
-  console.log('----------------------------------------------------------')
-}
+} as any as RespositoryObjectType

@@ -1,13 +1,13 @@
 import test from 'ava'
 import { addOneStep, getBaseline, updateHeaderData } from './test.utils'
-import { VersionControlled } from './versionControlled'
+import { Repository } from './repository'
 import { templates } from 'proto/lib/lumen'
 import ProcessTemplate = templates.ProcessTemplate
 
 const testAuthor = 'User name <name@domain.com>'
 
 test('merge with no commit', t => {
-  const master = new VersionControlled(new ProcessTemplate(), {TCreator: ProcessTemplate})
+  const master = new Repository(new ProcessTemplate(), {TCreator: ProcessTemplate})
   const [newBranch] = master.branch()
   t.throws(() => {
     master.merge(newBranch)
@@ -35,7 +35,7 @@ test('merge with no diff', async t => {
 })
 
 test('merge fast-forward with empty master', async t => {
-  const master = new VersionControlled(new ProcessTemplate(), {TCreator: ProcessTemplate})
+  const master = new Repository(new ProcessTemplate(), {TCreator: ProcessTemplate})
   const masterCommitCount = master.getHistory().commits.length
 
   const [newBranch] = master.branch()

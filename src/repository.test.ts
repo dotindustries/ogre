@@ -1,5 +1,5 @@
 import test from 'ava'
-import { VersionControlled } from './versionControlled'
+import { Repository } from './repository'
 import { addOneStep, getBaseline, updateHeaderData } from './test.utils'
 import { templates } from 'proto/lib/lumen'
 import ProcessTemplate = templates.ProcessTemplate
@@ -7,36 +7,36 @@ import ProcessTemplate = templates.ProcessTemplate
 const testAuthor = 'User name <name@domain.com>'
 
 test('reconstruction', async t => {
-  const [ vc, wrapped ] = await getBaseline()
+  const [ repo, wrapped ] = await getBaseline()
 
   updateHeaderData(wrapped)
-  await vc.commit('header data', testAuthor)
+  await repo.commit('header data', testAuthor)
 
   addOneStep(wrapped)
-  await vc.commit('first step', testAuthor)
+  await repo.commit('first step', testAuthor)
 
   // start reconstruction
   const p = new ProcessTemplate()
-  const vc2 = new VersionControlled(p, { history: vc.getHistory() })
+  const repo2 = new Repository(p, { history: repo.getHistory() })
 
-  const history = vc2.getHistory()
+  const history = repo2.getHistory()
   t.is(history.changeLog.length, 6, 'incorrect # of changelog entries')
   t.is(history.commits.length, 3, 'incorrect # of commits')
-  t.is(vc2.getVersion(), 6, 'incorrect version')
+  t.is(repo2.getVersion(), 6, 'incorrect version')
 })
 
 test('rewind to header commit', async t => {
-  const [ vc, wrapped ] = await getBaseline()
+  const [ repo, wrapped ] = await getBaseline()
 
   updateHeaderData(wrapped)
-  const headerHash = await vc.commit('header data', testAuthor)
+  const headerHash = await repo.commit('header data', testAuthor)
 
   addOneStep(wrapped)
-  await vc.commit('first step', testAuthor)
+  await repo.commit('first step', testAuthor)
 
-  vc.checkout(headerHash)
+  repo.checkout(headerHash)
 
-  const history = vc.getHistory()
+  const history = repo.getHistory()
   t.is(
     history.changeLog.length,
     3,
@@ -47,7 +47,7 @@ test('rewind to header commit', async t => {
     )}`
   )
   t.is(history.commits.length, 2, 'incorrect # of commits')
-  const head = vc.head()
+  const head = repo.head()
   t.is(
     head?.hash,
     headerHash,
@@ -58,7 +58,7 @@ test('rewind to header commit', async t => {
     )}`
   )
   t.is(
-    vc.getVersion(),
+    repo.getVersion(),
     3,
     `wrong current version: ${JSON.stringify(
       head,
@@ -69,17 +69,17 @@ test('rewind to header commit', async t => {
 })
 
 test('rewind to v2 with no referenced commit', async t => {
-  const [ vc, wrapped ] = await getBaseline()
+  const [ repo, wrapped ] = await getBaseline()
 
   updateHeaderData(wrapped)
-  await vc.commit('header data', testAuthor)
+  await repo.commit('header data', testAuthor)
 
   addOneStep(wrapped)
-  await vc.commit('first step', testAuthor)
+  await repo.commit('first step', testAuthor)
 
-  vc.gotoVersion(2)
+  repo.gotoVersion(2)
 
-  const history = vc.getHistory()
+  const history = repo.getHistory()
   t.is(
     history.changeLog.length,
     2,
@@ -90,7 +90,7 @@ test('rewind to v2 with no referenced commit', async t => {
     )}`
   )
   t.is(history.commits.length, 1, 'incorrect # of commits')
-  const head = vc.head()
+  const head = repo.head()
   t.is(
     head,
     undefined,
@@ -101,7 +101,7 @@ test('rewind to v2 with no referenced commit', async t => {
     )}`
   )
   t.is(
-    vc.getVersion(),
+    repo.getVersion(),
     2,
     `wrong current version: ${JSON.stringify(
       head,

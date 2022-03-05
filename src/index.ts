@@ -1,3 +1,3 @@
 export * from './interfaces'
-export * from './versionControlled'
+export * from './repository'
 export type { Commit } from './commit'
