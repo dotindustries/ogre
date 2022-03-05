@@ -159,7 +159,15 @@ export const VersionControlled = function <T extends { [k: PropertyKey]: any }>(
     if (from == version) {
       throw new Error(`no changes to commit`)
     }
-    const sha = objectHash(this.data, { algorithm: 'sha256' })
+    // a commit ID is a hash:
+    // tree object reference
+    // parent object reference
+    // author name
+    // author commit timestamp with timezone (e.g for me its +530) [could be different from commiter for example in case of cherry picking]
+    // committer name
+    // commit timestamp with timezone (e.g for me its +530)
+    // commit message
+    const sha = objectHash({ data: this.data, history: changeLog }, { algorithm: 'sha256' })
     commits.push({
       message,
       from,
