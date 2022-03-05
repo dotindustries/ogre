@@ -5,11 +5,13 @@ import ProcessElement = templates.ProcessElement
 import { v4 as uuid4 } from 'uuid'
 import { VersionControlled, VersionControlledObject } from './versionControlled'
 
-export function getBaseline(): [VersionControlledObject<ProcessTemplate>, ProcessTemplate, string] {
+const testAuthor = 'User name <name@domain.com>'
+
+export async function getBaseline(): Promise<[VersionControlledObject<ProcessTemplate>, ProcessTemplate, string]> {
   const template = new ProcessTemplate()
   const vc = new VersionControlled<ProcessTemplate>(template, { TCreator: ProcessTemplate })
   const wrapped = vc.data
-  const hash = vc.commit('baseline')
+  const hash = await vc.commit('baseline', testAuthor)
   return [vc, wrapped, hash]
 }
 

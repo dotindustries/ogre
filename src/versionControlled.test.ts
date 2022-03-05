@@ -4,16 +4,16 @@ import { addOneStep, getBaseline, updateHeaderData } from './test.utils'
 import { templates } from 'proto/lib/lumen'
 import ProcessTemplate = templates.ProcessTemplate
 
+const testAuthor = 'User name <name@domain.com>'
 
-
-test('reconstruction', t => {
-  const [ vc, wrapped ] = getBaseline()
+test('reconstruction', async t => {
+  const [ vc, wrapped ] = await getBaseline()
 
   updateHeaderData(wrapped)
-  vc.commit('header data')
+  await vc.commit('header data', testAuthor)
 
   addOneStep(wrapped)
-  vc.commit('first step')
+  await vc.commit('first step', testAuthor)
 
   // start reconstruction
   const p = new ProcessTemplate()
@@ -25,14 +25,14 @@ test('reconstruction', t => {
   t.is(vc2.getVersion(), 6, 'incorrect version')
 })
 
-test('rewind to header commit', t => {
-  const [ vc, wrapped ] = getBaseline()
+test('rewind to header commit', async t => {
+  const [ vc, wrapped ] = await getBaseline()
 
   updateHeaderData(wrapped)
-  const headerHash = vc.commit('header data')
+  const headerHash = await vc.commit('header data', testAuthor)
 
   addOneStep(wrapped)
-  vc.commit('first step')
+  await vc.commit('first step', testAuthor)
 
   vc.checkout(headerHash)
 
@@ -68,14 +68,14 @@ test('rewind to header commit', t => {
   )
 })
 
-test('rewind to v2 with no referenced commit', t => {
-  const [ vc, wrapped ] = getBaseline()
+test('rewind to v2 with no referenced commit', async t => {
+  const [ vc, wrapped ] = await getBaseline()
 
   updateHeaderData(wrapped)
-  vc.commit('header data')
+  await vc.commit('header data', testAuthor)
 
   addOneStep(wrapped)
-  vc.commit('first step')
+  await vc.commit('first step', testAuthor)
 
   vc.gotoVersion(2)
 

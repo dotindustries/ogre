@@ -1,6 +1,6 @@
-import { Change, Commit, History } from './interfaces'
+import { Change, History } from './interfaces'
+import { calculateHash, Commit } from './commit'
 
-const objectHash = require('object-hash')
 
 export interface VersionControlledObjectType {
   new<T>(obj: T, options: VersionControllerOptions<T>): VersionControlledObject<T>
@@ -12,32 +12,32 @@ export interface VersionControllerOptions<T> {
 }
 
 export interface VersionControlledObject<T> {
-  data: T;
+  data: T
 
-  printChangeLog(upTo?: number): void;
+  printChangeLog(upTo?: number): void
 
-  getChangeLog(): Change[];
+  getChangeLog(): Change[]
 
-  getHistory(): History;
+  getHistory(): History
 
-  gotoLastVersion(): boolean;
+  gotoLastVersion(): boolean
 
   // only for internal use. do not expose to custoemrs.
   // Customer should use commit/checkout logic
-  gotoVersion(newVersion: number): boolean;
+  gotoVersion(newVersion: number): boolean
 
   // The current object version, which we are on
-  getVersion(): number;
+  getVersion(): number
 
   // The current commit, which we are on.
   // It returns undefined, when the current version is not associated with a commit yet
-  head(): Commit | undefined;
+  head(): Commit | undefined
 
-  commit(message: string): string;
+  commit(message: string, author: string): Promise<string>
 
-  checkout(hash: string): void;
+  checkout(hash: string): void
 
-  logs(commits?: number): void;
+  logs(commits?: number): void
 
   // Helper method - mainly for testing - to create a new VersionControlledObject from the current one's history.
   // It essentially involves only two steps:
@@ -150,30 +150,36 @@ export const VersionControlled = function <T extends { [k: PropertyKey]: any }>(
 
   this.data = new Proxy(obj, handler)
 
-  const commit = (message: string): string => {
+  const commit = async (message: string, author: string): Promise<string> => {
+    let parent
     let from
     if (commits.length > 0) {
-      const last = commits[commits.length - 1]
-      from = last.to
+      parent = commits[commits.length - 1]
+      from = parent.to
     }
     if (from == version) {
       throw new Error(`no changes to commit`)
     }
-    // a commit ID is a hash:
-    // tree object reference
-    // parent object reference
-    // author name
-    // author commit timestamp with timezone (e.g for me its +530) [could be different from commiter for example in case of cherry picking]
-    // committer name
-    // commit timestamp with timezone (e.g for me its +530)
-    // commit message
-    const sha = objectHash({ data: this.data, history: changeLog }, { algorithm: 'sha256' })
-    commits.push({
+
+    const timestamp = new Date()
+    const changes = changeLog.slice(from, version)
+    const sha = await calculateHash({
       message,
-      from,
+      author,
+      changes,
+      parentRef: parent?.hash,
+      timestamp
+    })
+
+    commits.push({
       hash: sha,
-      to: version,
-      timestamp: new Date()
+      message,
+      author,
+      changes: changes,
+      parent: parent?.hash,
+      timestamp,
+      from,
+      to: version
     })
 
     return sha
@@ -181,6 +187,8 @@ export const VersionControlled = function <T extends { [k: PropertyKey]: any }>(
 
   this.gotoVersion = gotoVersion
   this.gotoLastVersion = gotoLastVersion
+
+  // region Logs
   this.printChangeLog = (upTo) => {
     printChangeLog(this, upTo)
   }
@@ -205,6 +213,7 @@ export const VersionControlled = function <T extends { [k: PropertyKey]: any }>(
       idx--
     }
   }
+ // endregion
 
   this.getVersion = () => version
   this.head = () => {

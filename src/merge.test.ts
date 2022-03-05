@@ -4,6 +4,8 @@ import { VersionControlled } from './versionControlled'
 import { templates } from 'proto/lib/lumen'
 import ProcessTemplate = templates.ProcessTemplate
 
+const testAuthor = 'User name <name@domain.com>'
+
 test('merge with no commit', t => {
   const master = new VersionControlled(new ProcessTemplate(), {TCreator: ProcessTemplate})
   const [newBranch] = master.branch()
@@ -12,14 +14,14 @@ test('merge with no commit', t => {
   }, { message: 'nothing to merge'})
 })
 
-test('merge with no diff', t => {
-  const [ master, wrappedObject ] = getBaseline()
+test('merge with no diff', async t => {
+  const [ master, wrappedObject ] = await getBaseline()
 
   updateHeaderData(wrappedObject)
-  master.commit('header data')
+  await master.commit('header data', testAuthor)
 
   addOneStep(wrappedObject)
-  master.commit('first step')
+  await master.commit('first step', testAuthor)
   const head = master.head()?.hash
 
   // create new branch
@@ -32,7 +34,7 @@ test('merge with no diff', t => {
   }, {message: `already at commit: ${head}`})
 })
 
-test('merge fast-forward with empty master', t => {
+test('merge fast-forward with empty master', async t => {
   const master = new VersionControlled(new ProcessTemplate(), {TCreator: ProcessTemplate})
   const masterCommitCount = master.getHistory().commits.length
 
@@ -42,7 +44,7 @@ test('merge fast-forward with empty master', t => {
 
   newBranch.data.name = "name changed"
   newBranch.data.description = "description changed"
-  const newHead = newBranch.commit('description changes')
+  const newHead = await newBranch.commit('description changes', testAuthor)
 
   t.is(master.head(), undefined, 'master head is not undefined')
 
@@ -55,12 +57,12 @@ test('merge fast-forward with empty master', t => {
   }, 'threw unexpected error')
 })
 
-test('merge fast-forward', t => {
-  const [ master, wrappedObject ] = getBaseline()
+test('merge fast-forward', async t => {
+  const [ master, wrappedObject ] = await getBaseline()
   updateHeaderData(wrappedObject)
-  master.commit('header data')
+  await master.commit('header data', testAuthor)
   addOneStep(wrappedObject)
-  master.commit('first step')
+  await master.commit('first step', testAuthor)
 
   const masterCommitCount = master.getHistory().commits.length
 
@@ -72,7 +74,7 @@ test('merge fast-forward', t => {
   // commit to new branch
   wrappedObject2.isPublic = true
   wrappedObject2.name = 'new name was necessary'
-  const newHead = newBranch.commit('new name for public use')
+  const newHead = await newBranch.commit('new name for public use', testAuthor)
   t.is(newBranch.getVersion(), master.getVersion() + 2, 'incorrect version #')
 
   t.notThrows(() => {

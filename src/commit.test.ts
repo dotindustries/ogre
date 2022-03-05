@@ -1,8 +1,10 @@
 import test from 'ava'
 import { addOneStep, getBaseline, updateHeaderData } from './test.utils'
 
-test('baseline with 1 commit and zero changelog entries', t => {
-  const [ vc ] = getBaseline()
+const testAuthor = 'User name <name@domain.com>'
+
+test('baseline with 1 commit and zero changelog entries', async t => {
+  const [ vc ] = await getBaseline()
 
   const history = vc.getHistory()
   t.is(history.changeLog.length, 0, 'has changelog entries')
@@ -10,11 +12,11 @@ test('baseline with 1 commit and zero changelog entries', t => {
   t.is(vc.getVersion(), 0, 'incorrect version')
 })
 
-test('two commits with 3 changes', t => {
-  const [ vc, wrapped ] = getBaseline()
+test('two commits with 3 changes', async t => {
+  const [ vc, wrapped ] = await getBaseline()
 
   updateHeaderData(wrapped)
-  vc.commit('header data')
+  await vc.commit('header data', testAuthor)
 
   const history = vc.getHistory()
   t.is(history.changeLog.length, 3, 'incorrect # of changelog entries')
@@ -22,14 +24,14 @@ test('two commits with 3 changes', t => {
   t.is(vc.getVersion(), 3, 'incorrect version')
 })
 
-test('array push double-change, 6 changes, 3 commits', t => {
-  const [ vc, wrapped ] = getBaseline()
+test('array push double-change, 6 changes, 3 commits', async t => {
+  const [ vc, wrapped ] = await getBaseline()
 
   updateHeaderData(wrapped)
-  vc.commit('header data')
+  await vc.commit('header data', testAuthor)
 
   addOneStep(wrapped)
-  vc.commit('first step')
+  await vc.commit('first step', testAuthor)
 
   const history = vc.getHistory()
   t.is(history.changeLog.length, 6, 'incorrect # of changelog entries')

@@ -26,11 +26,9 @@
   "author": "János Veres @nadilas",
   "license": "MIT",
   "dependencies": {
-    "object-hash": "^3.0.0"
   },
   "devDependencies": {
     "typescript": "^4.5.5",
-    "@types/object-hash": "^2.2.1",
     "@types/uuid": "^8.3.4",
     "uuid": "^8.3.2",
     "ava": "^4.0.1",
