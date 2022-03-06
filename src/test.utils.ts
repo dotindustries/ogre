@@ -1,36 +1,42 @@
-import { templates } from 'proto/lib/lumen'
 import { v4 as uuid4 } from 'uuid'
 import { Repository, RepositoryObject } from './repository'
 import { Commit } from './commit'
-import ProcessTemplate = templates.ProcessTemplate
-import ProcessStep = templates.ProcessStep
-import ProcessElement = templates.ProcessElement
+
+export class NestedObject {
+  public name: string | undefined
+  public uuid: string | undefined
+}
+
+export class ComplexObject {
+  public uuid: string | undefined
+  public name: string | undefined
+  public description: string | undefined
+  public nested: NestedObject[] = []
+}
 
 export const testAuthor = 'User name <name@domain.com>'
 
-export async function getBaseline(): Promise<[RepositoryObject<ProcessTemplate>, ProcessTemplate]> {
-  const template = new ProcessTemplate()
-  const repo = new Repository<ProcessTemplate>(template, {})
-  const wrapped = repo.data
-  return [repo, wrapped]
+export async function getBaseline(): Promise<[RepositoryObject<ComplexObject>, ComplexObject]> {
+  const co = new ComplexObject()
+  const repo = new Repository(co, {})
+  return [repo, repo.data]
 }
 
-export function updateHeaderData(wrapped: templates.ProcessTemplate) {
+export function updateHeaderData(wrapped: ComplexObject) {
+  wrapped.uuid = uuid4()
   wrapped.name = 'my first process template'
   wrapped.description = 'now we have a description'
-  wrapped.uuid = uuid4()
 
   return 3 // change entries
 }
 
-export function addOneStep(wrapped: templates.ProcessTemplate) {
-  const pe = new ProcessElement()
-  pe.step = new ProcessStep()
-  pe.step.uuid = uuid4()
-  pe.step.name = 'first step name'
+export function addOneStep(wrapped: ComplexObject) {
+  const pe = new NestedObject()
+  pe.uuid = uuid4()
+  pe.name = 'first name'
 
-  wrapped.process.push(pe)
-  wrapped.process[0].step!.name = 'new name'
+  wrapped.nested.push(pe)
+  wrapped.nested[0].name = 'new name'
 
   return 3 // change entries
 }

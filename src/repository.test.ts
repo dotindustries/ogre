@@ -1,8 +1,6 @@
 import test from 'ava'
 import { Repository } from './repository'
-import { addOneStep, getBaseline, sumChanges, testAuthor, updateHeaderData } from './test.utils'
-import { templates } from 'proto/lib/lumen'
-import ProcessTemplate = templates.ProcessTemplate
+import {addOneStep, ComplexObject, getBaseline, sumChanges, testAuthor, updateHeaderData} from './test.utils'
 
 test('reconstruction', async t => {
   const [ repo, wrapped ] = await getBaseline()
@@ -19,7 +17,7 @@ test('reconstruction', async t => {
   t.is(history.commits.length, 2, 'incorrect # of commits')
 
   // start reconstruction
-  const p = new ProcessTemplate()
+  const p = new ComplexObject()
   const repo2 = new Repository(p, { history })
 
   const history2 = repo2.getHistory()
