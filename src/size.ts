@@ -11,19 +11,16 @@ export const getSizeInBytes = (obj: string | any) => {
   return new TextEncoder().encode(str).length // in bytes
 }
 
-export const logSizeInBytes = (description: string, obj: any) => {
-  const bytes = getSizeInBytes(obj)
-  console.log(`${description} is approximately ${bytes} B`)
+export const sizeInBytes = (obj: any) => {
+  return getSizeInBytes(obj) // B
 }
 
-export const logSizeInKilobytes = (description: string, obj: any) => {
+export const sizeInKilobytes = (obj: any) => {
   const bytes = getSizeInBytes(obj)
-  const kb = (bytes / 1000).toFixed(2)
-  console.log(`${description} is approximately ${kb} kB`)
+  return (bytes / 1000) // kB
 }
 
-export const logSizeInMegabytes = (description: string, obj: any) => {
+export const sizeInMegabytes = (obj: any) => {
   const bytes = getSizeInBytes(obj)
-  const mb = (bytes / 1000 / 1000).toFixed(2)
-  console.log(`${description} is approximately ${mb} mB`)
+  return (bytes / 1000 / 1000) // mB
 }

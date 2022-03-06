@@ -1,3 +1,5 @@
 export * from './interfaces'
 export * from './repository'
-export type { Commit } from './commit'
+export {Commit} from './commit'
+export * from './ref'
+export * from './size'

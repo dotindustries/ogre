@@ -25,7 +25,7 @@ export interface RepositoryObject<T> {
 
   checkout(shaish: string, createBranch?: boolean): void
 
-  logs(commits?: number): void
+  logs(commits?: number): Commit[]
 
   createBranch(name: string): string
 
