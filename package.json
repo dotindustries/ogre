@@ -11,7 +11,7 @@
     "test": "nyc ava",
     "test.watch": "ava --watch",
     "coverage:html": "nyc report --reporter=html",
-    "coverage:coveralls": "nyc report --reporter=text-lcov | coveralls",
+    "coverage:coveralls": "nyc ava && nyc report --reporter=text-lcov | coveralls",
     "coverage": "nyc report"
   },
   "ava": {
