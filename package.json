@@ -10,7 +10,9 @@
     "build.watch": "tsc --build --watch",
     "test": "nyc ava",
     "test.watch": "ava --watch",
-    "report": "nyc report --reporter=html"
+    "coverage:report.html": "nyc report --reporter=html",
+    "coverage:report.coveralls": "nyc report --reporter=text-lcov | coveralls",
+    "coverage:report": "nyc report"
   },
   "ava": {
     "timeout": "60s",
@@ -35,6 +37,7 @@
     "ava": "^4.0.1",
     "@ava/typescript": "^3.0.1",
     "nyc": "^15.1.0",
+    "coveralls": "^3.1.1",
     "config": "*"
   }
 }
