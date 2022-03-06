@@ -1,6 +1,6 @@
 import test from 'ava'
 import { Repository } from './repository'
-import { addOneStep, getBaseline, testAuthor, updateHeaderData } from './test.utils'
+import { addOneStep, getBaseline, sumChanges, testAuthor, updateHeaderData } from './test.utils'
 import { templates } from 'proto/lib/lumen'
 import ProcessTemplate = templates.ProcessTemplate
 
@@ -18,6 +18,6 @@ test('reconstruction', async t => {
   const repo2 = new Repository(p, { history: repo.getHistory() })
 
   const history = repo2.getHistory()
-  t.is(history.changeLog.length, 6, 'incorrect # of changelog entries')
+  t.is(sumChanges(history.commits), 6, 'incorrect # of changelog entries')
   t.is(history.commits.length, 2, 'incorrect # of commits')
 })

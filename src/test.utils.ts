@@ -1,6 +1,7 @@
 import { templates } from 'proto/lib/lumen'
 import { v4 as uuid4 } from 'uuid'
 import { Repository, RepositoryObject } from './repository'
+import { Commit } from './commit'
 import ProcessTemplate = templates.ProcessTemplate
 import ProcessStep = templates.ProcessStep
 import ProcessElement = templates.ProcessElement
@@ -9,7 +10,7 @@ export const testAuthor = 'User name <name@domain.com>'
 
 export async function getBaseline(): Promise<[RepositoryObject<ProcessTemplate>, ProcessTemplate]> {
   const template = new ProcessTemplate()
-  const repo = new Repository<ProcessTemplate>(template, { TCreator: ProcessTemplate })
+  const repo = new Repository<ProcessTemplate>(template, {})
   const wrapped = repo.data
   return [repo, wrapped]
 }
@@ -28,4 +29,8 @@ export function addOneStep(wrapped: templates.ProcessTemplate) {
 
   wrapped.process.push(pe)
   wrapped.process[0].step!.name = 'new name'
+}
+
+export function sumChanges(commits: Commit[] | undefined) {
+  return commits?.map(c => c.changes.length).reduce((p, c) => p + c, 0)
 }

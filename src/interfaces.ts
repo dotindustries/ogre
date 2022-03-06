@@ -14,6 +14,6 @@ export interface Change {
 }
 
 export interface History {
-  changeLog: Change[]
+  refs: Map<string, Reference>
   commits: Commit[]
 }

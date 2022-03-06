@@ -1,9 +1,9 @@
 import { Change, History, Reference } from './interfaces'
 import { calculateHash, Commit } from './commit'
+import { validBranch } from './ref'
 
 export interface RepositoryOptions<T> {
-  history?: History,
-  TCreator?: new() => T
+  history?: History
 }
 
 export interface RepositoryObject<T> {
@@ -23,7 +23,7 @@ export interface RepositoryObject<T> {
 
   commit(message: string, author: string): Promise<string>
 
-  checkout(hash: string): void
+  checkout(shaish: string): void
 
   logs(commits?: number): void
 
@@ -32,9 +32,9 @@ export interface RepositoryObject<T> {
   // 1. creating a new instance of the underlying data type (T)
   // 2. constructing a new VersionControlled object with the new instance
   //    passing in the history of the current instance
-  createBranch(): [RepositoryObject<T>, T]
+  createBranch(name: string): string
 
-  merge(source: RepositoryObject<T> | History): string
+  merge(source: string | RepositoryObject<T> | History): string
 
   branch(): string
 
@@ -55,11 +55,11 @@ export const Repository = function <T extends { [k: PropertyKey]: any }>(
 ) {
   let savedLength: number | undefined
   let version = 0
-  const refs: Map<string, Reference> = new Map<string, Reference>([[REFS_HEAD, {
+  const refs: Map<string, Reference> = options.history?.refs ?? new Map<string, Reference>([[REFS_HEAD, {
     name: REFS_HEAD,
     value: `ref: ${REFS_MAIN}`
   }]])
-  const changeLog = options.history?.changeLog ?? []
+  const changeLog: Change[] = []
   const targets: any[] = []
   const commits: Commit[] = options.history?.commits ?? []
   const hash: Map<T, any[]> = new Map([[obj, []]])
@@ -180,9 +180,8 @@ export const Repository = function <T extends { [k: PropertyKey]: any }>(
       const commit = history.commits[idx]
       console.log(`${commit.hash} - ${commit.timestamp.toISOString()}`)
       console.log(`  ${commit.message}`)
-      const changes = history.changeLog.slice(commit.from, commit.to)
-      for (let j = changes.length - 1; j >= 0; j--) {
-        const chg = changes[j]
+      for (let j = commit.changes.length - 1; j >= 0; j--) {
+        const chg = commit.changes[j]
         console.log(`    ${(commit.from ?? 0) + j}:${JSON.stringify(chg)}`)
       }
       counter++
@@ -209,34 +208,45 @@ export const Repository = function <T extends { [k: PropertyKey]: any }>(
   this.getHistory = (): History => {
     // only send back shallow copies of changelog and commits up to current version
     return {
-      changeLog: [...changeLog.slice(undefined, version)],
+      refs: new Map(refs),
       commits: [...commits.filter((c) => c.to <= version)]
     }
   }
 
-  const commitAtHead = () => {
-    const head = refs.get(REFS_HEAD)
-    if (!head) {
-      throw new Error(`unreachable: HEAD is not present`)
+  const commitAt = (ref: string, references: Map<string, Reference>, commitsList: Commit[]) => {
+    const reference = references.get(ref)
+    if (!reference) {
+      throw new Error(`unreachable: '${ref}' is not present`)
     }
     let commitHash
-    if (head.value.includes(refPrefix)) {
-      const refKey = cleanRefValue(head.value)
-      const ref = refs.get(refKey)
-      if (!ref) {
+    if (reference.value.includes(refPrefix)) {
+      const refKey = cleanRefValue(reference.value)
+      const targetRef = references.get(refKey)
+      if (!targetRef) {
         // target branch may not have been saved yet
         return undefined
       }
-      commitHash = ref.value
+      commitHash = targetRef.value
     } else {
-      commitHash = head.value
+      commitHash = reference.value
     }
-    for (const c of commits) {
+    for (const c of commitsList) {
       if (c.hash === commitHash) {
         return c
       }
     }
     return undefined
+  }
+
+  const commitAtHead = () => {
+    return commitAt(REFS_HEAD, refs, commits)
+  }
+  const mustCommitAtHead = () => {
+    const commitHead = commitAtHead()
+    if (!commitHead) {
+      throw new Error(`unreachable: HEAD or its target ref not present`)
+    }
+    return commitHead
   }
 
   this.commit = async (message: string, author: string): Promise<string> => {
@@ -300,25 +310,48 @@ export const Repository = function <T extends { [k: PropertyKey]: any }>(
     gotoLastVersion()
   }
 
-  this.checkout = (shaish) => {
+  // accept a shaish expression (e.g. branch, tag, refs/*/*, commitSha)
+  const shaishToCommit = (shaish: string): [commit: Commit, isRef: boolean, ref: string | undefined] => {
     let sha = shaish
-    // accept a shaish expression (e.g. branch, tag)
+    let isRef = false
+    let refKey: string | undefined = undefined
+
     // check for refs
-    for (const ref of refs.values()) {
-      if (ref.name === shaish) {
+    for (const [name, ref] of refs.entries()) {
+      // match on
+      if (ref.name === shaish || name === shaish) {
+        isRef = true
+        refKey = name
         sha = ref.value
+        if (sha.includes(refPrefix)) {
+          const cleanedRef = cleanRefValue(sha)
+          const c = commitAt(cleanedRef, refs, commits)
+          if (!c) {
+            throw new Error(`${cleanedRef} points to non-existing commit`)
+          }
+          return [c, isRef, refKey]
+        }
+        break
       }
     }
-
-    // TODO accept a shaish expression: abbrev sha
-    const commit = commits.find((c) => c.hash === sha)
-    if (!commit) {
-      throw new Error(`commit (${shaish}) does not belong to repository`)
+    // check for partial sha matches
+    const found = commits.filter(c => c.hash.indexOf(sha) > -1)
+    if (found.length === 0) {
+      throw new Error(`${shaish} does not belong to repository`)
     }
+    // but sha should be specific enough to resolve to 1 commit
+    if (found.length > 1) {
+      throw new Error(`commit `)
+    }
+    return [found[0], isRef, refKey]
+  }
+
+  this.checkout = (shaish) => {
+    const [commit, isRef, refKey] = shaishToCommit(shaish)
 
     rebuildChangeLog(commit)
 
-    moveRef(REFS_HEAD, commit)
+    moveRef(REFS_HEAD, isRef && refKey !== undefined ? refKey : commit)
   }
 
   this.branch = () => {
@@ -333,26 +366,24 @@ export const Repository = function <T extends { [k: PropertyKey]: any }>(
         return getLastItem(refName)
     }
 
-    // fallback to check if head commit conforms to any branch refs
-    for (const [name, ref] of refs.entries()) {
-      if (name !== REFS_HEAD && ref.value === currentHeadRef.value) {
-        return name
-      }
-    }
-
     return REFS_HEAD // detached state
   }
 
-  this.createBranch = () => {
-    if (!options.TCreator) {
-      throw new Error(`Cannot branch out, no constructor provided.
-      Please branch manually: new Repository(new T(), {history: repo.getHistory()})`)
+  this.createBranch = (name) => {
+  if (!validBranch(name)) {
+    throw new Error(`invalid ref name`)
+  }
+    const refName = `refs/heads/${name}`
+    const headCommit = commitAtHead()
+    if (!headCommit) {
+      const headRef = this.head()
+      if (!headRef) {
+        throw new Error(`unreachable: HEAD not present`)
+      }
+      throw new Error(`fatal: not a valid object name: '${getLastItem(headRef)}'`)
     }
-    const repo = new Repository(
-      new options.TCreator(),
-      { history: this.getHistory(), TCreator: options.TCreator }
-    )
-    return [repo, repo.data]
+    refs.set(refName, { name: name, value: headCommit.hash })
+    return refName
   }
 
   const moveRef = (refName: string, value: string | Commit) => {
@@ -373,22 +404,20 @@ export const Repository = function <T extends { [k: PropertyKey]: any }>(
     //   for fancier merge tree
     //   https://github.com/isomorphic-git/isomorphic-git/blob/a623133345a5d8b6bb7a8352ea9702ce425d8266/src/utils/mergeTree.js#L33
 
-    const src = source instanceof Repository
-      ? source.getHistory()
-      : source
-    const srcHead = src.commits[src.commits.length - 1]
-    const masterHead = commits[commits.length - 1]
-
-    if (!srcHead && !masterHead) {
-      throw new Error(`nothing to merge`)
+    if (typeof source !== 'string') {
+      // const srcHead = commitAt(REFS_HEAD, src.refs, src.commits)
+      throw new Error(`fatal: source type (${source instanceof Repository ? 'Repository' : 'History'}) not implemented`)
     }
+
+    const [srcCommit] = shaishToCommit(source)
+    const headCommit = mustCommitAtHead()
 
     // no change
     // *---* (master)
     //     |
     //     * (foo)
-    if (masterHead && srcHead && srcHead.hash === masterHead.hash) {
-      throw new Error(`already at commit: ${srcHead.hash}`)
+    if (headCommit.hash === srcCommit.hash) {
+      throw new Error(`already up to date`)
     }
 
     // fast-forward
@@ -399,20 +428,23 @@ export const Repository = function <T extends { [k: PropertyKey]: any }>(
     // *---*
     //      \
     //       *---*---* (master, foo)
-    const indexOfMasterHeadOnSrc = src.commits.indexOf(masterHead)
-    if (masterHead === undefined || indexOfMasterHeadOnSrc > -1) {
-      const commitsToMerge = src.commits.slice(indexOfMasterHeadOnSrc + 1)
-      for (const c of commitsToMerge) {
-        commits.push(c)
-        changeLog.push(...src.changeLog.slice(c.from, c.to))
-      }
-
-      moveRef(this.head(), commitsToMerge[commitsToMerge.length - 1])
-
-      // let version catch up
-      gotoLastVersion()
-      return srcHead.hash // ff to last commit in source
-    }
+    // const indexOfMasterHeadOnSrc = src.commits.indexOf(masterHead)
+    // if (masterHead === undefined || indexOfMasterHeadOnSrc > -1) {
+    //   const commitsToMerge = src.commits.slice(indexOfMasterHeadOnSrc + 1)
+    //   for (const c of commitsToMerge) {
+    //     commits.push(c)
+    //   }
+    //
+    //   moveRef(this.head(), commitsToMerge[commitsToMerge.length - 1])
+    //
+    //   // let version catch up
+    //   const commitHEAD = commitAtHead()
+    //   if (!commitHEAD) {
+    //     throw new Error(`HEAD at destination does not point to any commits`)
+    //   }
+    //   rebuildChangeLog(commitHEAD)
+    //   return commitHEAD.hash // ff to last commit in source
+    // }
 
     // todo diverge
     // *---*---* (master)
@@ -429,8 +461,12 @@ export const Repository = function <T extends { [k: PropertyKey]: any }>(
 
     throw new Error('unknown merge type: not implemented yet')
   }
+
   // apply change log at the end of the constructor
-  gotoLastVersion()
+  const headCommit = commitAtHead()
+  if (headCommit) {
+    rebuildChangeLog(headCommit)
+  }
 } as any as RespositoryObjectType
 
 const getLastItem = (thePath: string) => thePath.substring(thePath.lastIndexOf('/') + 1)
