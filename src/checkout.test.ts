@@ -46,6 +46,8 @@ test('checkout commit which has two refs pointing leaves HEAD detached', async t
 
   repo.createBranch('new_feature')
   repo.checkout(commit)
+  t.is(repo.ref('refs/heads/main'), commit, 'main does not point to commit')
+  t.is(repo.ref('refs/heads/new_feature'), commit, 'new_feature does not point to commit')
   t.is(repo.branch(), 'HEAD', 'head is not detached at commit')
   t.is(repo.head(), commit, 'head is not pointing to commit')
 })
