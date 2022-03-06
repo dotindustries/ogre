@@ -1,17 +1,17 @@
 import test from 'ava'
 import { addOneStep, getBaseline, testAuthor, updateHeaderData } from './test.utils'
 
-test('checkout previous commit', async t => {
+test('checkout prev commit', async t => {
   const [ repo, wrapped ] = await getBaseline()
 
   updateHeaderData(wrapped)
-  const headerHash = await repo.commit('header data', testAuthor)
+  const headerDataHash = await repo.commit('header data', testAuthor)
 
   addOneStep(wrapped)
   await repo.commit('first step', testAuthor)
 
-  repo.checkout(headerHash)
-
+  repo.checkout(headerDataHash)
+  const head = repo.head()
   const history = repo.getHistory()
   t.is(
     history.changeLog.length,
@@ -23,14 +23,6 @@ test('checkout previous commit', async t => {
     )}`
   )
   t.is(history.commits.length, 1, 'incorrect # of commits')
-  const head = repo.head()
-  t.is(
-    head?.hash,
-    headerHash,
-    `we should be at header commit instead of: ${JSON.stringify(
-      head,
-      null,
-      '  '
-    )}`
-  )
+  t.is(head, headerDataHash, `points to wrong commit`)
+  t.is(repo.branch(), 'HEAD', 'repo is not in detached state')
 })

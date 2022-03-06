@@ -6,7 +6,7 @@ import ProcessTemplate = templates.ProcessTemplate
 
 test('merge with no commit', t => {
   const master = new Repository(new ProcessTemplate(), {TCreator: ProcessTemplate})
-  const [newBranch] = master.branch()
+  const [newBranch] = master.createBranch()
   t.throws(() => {
     master.merge(newBranch)
   }, { message: 'nothing to merge'})
@@ -20,23 +20,24 @@ test('merge with no diff', async t => {
 
   addOneStep(wrappedObject)
   await master.commit('first step', testAuthor)
-  const head = master.head()?.hash
+  const headRef = master.head()
+  const atCommit = master.ref(headRef)
 
   // create new branch
-  const [newBranch] = master.branch()
+  const [newBranch] = master.createBranch()
   t.is(newBranch.getHistory()?.changeLog.length, 6, 'new branch w/ incorrect # of changlog')
 
   t.throws(() => {
     // merge in master branch from new branch
     master.merge(newBranch)
-  }, {message: `already at commit: ${head}`})
+  }, {message: `already at commit: ${atCommit}`})
 })
 
 test('merge fast-forward with empty master', async t => {
   const master = new Repository(new ProcessTemplate(), {TCreator: ProcessTemplate})
   const masterCommitCount = master.getHistory().commits.length
 
-  const [newBranch] = master.branch()
+  const [newBranch] = master.createBranch()
   const history = newBranch.getHistory()
   t.is(history?.changeLog.length, 0, 'new branch w/ incorrect # of changelog entries')
 
@@ -44,12 +45,14 @@ test('merge fast-forward with empty master', async t => {
   newBranch.data.description = "description changed"
   const newHead = await newBranch.commit('description changes', testAuthor)
 
-  t.is(master.head(), undefined, 'master head is not undefined')
 
   t.notThrows(() => {
     const mergeHash = master.merge(newBranch)
+    const headRef = master.head()
+    const refHash = master.ref(headRef)
+
     t.is(mergeHash, newHead, 'did not fast-forward to expected commit')
-    t.is(master.head()?.hash, mergeHash, `head@master is not the expected commit`)
+    t.is(refHash, mergeHash, `head@master is not the expected commit`)
     t.is(master.getHistory().commits.length, masterCommitCount+1, 'fast-forward failed, superfluous commit detected')
   }, 'threw unexpected error')
 })
@@ -64,7 +67,7 @@ test('merge fast-forward', async t => {
   const masterCommitCount = master.getHistory().commits.length
 
   // create new branch
-  const [newBranch, wrappedObject2] = master.branch()
+  const [newBranch, wrappedObject2] = master.createBranch()
   const history = newBranch.getHistory()
   t.is(history?.changeLog.length, 6, 'new branch w/ incorrect # of changelog entries')
 
@@ -76,9 +79,11 @@ test('merge fast-forward', async t => {
   t.notThrows(() => {
     // merge in master branch from new branch
     const mergeHash = master.merge(newBranch)
+    const headRef = master.head()
+    const refHash = master.ref(headRef)
 
     t.is(mergeHash, newHead, 'did not fast-forward to expected commit')
-    t.is(master.head()?.hash, mergeHash, `head is not the expected commit`)
+    t.is(refHash, mergeHash, `head '${headRef}' is not the expected commit`)
     t.is(master.getHistory().commits.length, masterCommitCount+1, 'fast-forward failed, superfluous commit detected')
   }, 'threw unexpected error during merge')
 })

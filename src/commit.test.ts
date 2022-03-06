@@ -12,31 +12,26 @@ test('baseline with 1 commit and zero changelog entries', async t => {
   t.is(history.commits.length, 0, 'incorrect # of commits')
 })
 
-test('head points to nothing', async t => {
+test('head points to main', async t => {
   const template = new ProcessTemplate()
   const repo = new Repository<ProcessTemplate>(template, { TCreator: ProcessTemplate })
 
-  t.is(repo.head(), undefined, 'head should point to nothing')
+  t.is(repo.head(), 'refs/heads/main', 'head not pointing where it should')
 })
 
 test('no commit without changes', async t => {
   const template = new ProcessTemplate()
   const repo = new Repository<ProcessTemplate>(template, { TCreator: ProcessTemplate })
 
-  t.is(repo.head(), undefined, 'head should point to nothing')
-
   await t.throwsAsync(async () => {
     return await repo.commit('baseline', testAuthor)
   }, { message: 'no changes to commit' })
-
-  t.is(repo.head(), undefined, 'head should point to nothing')
 })
 
 test('no commit without changes after recent commit', async t => {
   const template = new ProcessTemplate()
   const repo = new Repository<ProcessTemplate>(template, { TCreator: ProcessTemplate })
 
-  t.is(repo.head(), undefined, 'head should point to nothing')
   repo.data.name = 'new name'
   await repo.commit('baseline', testAuthor)
 
@@ -45,16 +40,13 @@ test('no commit without changes after recent commit', async t => {
   }, { message: 'no changes to commit' })
 })
 
-test('head moves to recent commit', async t => {
+test('main moves to recent commit', async t => {
   const template = new ProcessTemplate()
   const repo = new Repository<ProcessTemplate>(template, { TCreator: ProcessTemplate })
 
-  t.is(repo.head(), undefined, 'head should point to nothing')
   repo.data.name = 'new name'
   const hash = await repo.commit('baseline', testAuthor)
-  const head = repo.head()
-  t.not(head, undefined, 'head should be a commit')
-  t.is (repo.head()?.hash, hash, 'head does not point to recent commit')
+  t.is (repo.ref('refs/heads/main'), hash, 'head does not point to recent commit')
 })
 
 test('two commits with 3 changes', async t => {
@@ -83,4 +75,5 @@ test('array push double-change, 6 changes, 3 commits', async t => {
   t.is(history.commits[0].changes.length, 3, '#incorrect # of changes in commit#1')
   t.is(history.commits[1].changes.length, 3, '#incorrect # of changes in commit#2')
 })
+
 test.todo('commit --amend')
