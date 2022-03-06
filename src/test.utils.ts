@@ -19,6 +19,8 @@ export function updateHeaderData(wrapped: templates.ProcessTemplate) {
   wrapped.name = 'my first process template'
   wrapped.description = 'now we have a description'
   wrapped.uuid = uuid4()
+
+  return 3 // change entries
 }
 
 export function addOneStep(wrapped: templates.ProcessTemplate) {
@@ -29,6 +31,8 @@ export function addOneStep(wrapped: templates.ProcessTemplate) {
 
   wrapped.process.push(pe)
   wrapped.process[0].step!.name = 'new name'
+
+  return 3 // change entries
 }
 
 export function sumChanges(commits: Commit[] | undefined) {

@@ -115,3 +115,52 @@ test('commit --amend changes hash on message change', async t => {
   t.is(repo.branch(), 'main', 'we are on the wrong branch')
   t.is(repo.ref('refs/heads/main'), changedHash, 'main should point to changed commit hash')
 })
+
+test('commit at detached HEAD does not affect main, but moves head', async t => {
+  const [repo] = await getBaseline()
+  repo.data.name = 'new name'
+  const commit = await repo.commit('name change', testAuthor)
+  repo.data.description = 'new fancy description'
+  const last = await repo.commit('desc change', testAuthor)
+  repo.checkout(commit)
+  t.is(repo.head(), commit, 'HEAD did not move to commit')
+  t.is(repo.branch(), 'HEAD', 'repo is not in detached state')
+
+  repo.data.description = 'a different description'
+  const commitOnDetached = await repo.commit('msg', testAuthor)
+  t.is(repo.head(), commitOnDetached, 'HEAD did not move to commit')
+  t.is(repo.ref('refs/heads/main'), last, 'main branch did not stay at last commit')
+})
+
+test('commit at detached HEAD saved to a branch', async t => {
+  const [repo] = await getBaseline()
+  repo.data.name = 'new name'
+  const commit = await repo.commit('name change', testAuthor)
+  repo.data.description = 'new fancy description'
+  await repo.commit('desc change', testAuthor)
+  repo.checkout(commit)
+
+  repo.data.description = 'a different description'
+  const commitOnDetached = await repo.commit('msg', testAuthor)
+
+  const savepointRef = repo.createBranch('savepoint')
+  t.is(repo.ref(savepointRef), commitOnDetached, 'savepoint branch should point to last detached commit')
+})
+
+
+test('commit --amend changes hash on message change even in detached HEAD', async t => {
+  const [repo] = await getBaseline()
+  repo.data.name = 'new name'
+  const commitToAmend = await repo.commit('name change', testAuthor)
+  repo.data.description = 'desc change'
+  const descCommit = await repo.commit('desc change', testAuthor)
+  repo.checkout(commitToAmend)
+  const changedHash = await repo.commit('initial setup', testAuthor, true)
+  t.not(changedHash, commitToAmend, 'hash should have changed')
+  const history = repo.getHistory()
+  t.is(history.commits.length, 1, 'wrong # of commits')
+  t.is(sumChanges(history.commits), 1, 'wrong # of changes')
+  t.is(repo.branch(), 'HEAD', 'not in detached state')
+  t.is(repo.head(), changedHash, 'HEAD is not pointing to detached commit')
+  t.is(repo.ref('refs/heads/main'), descCommit, 'main should point to changed commit hash')
+})

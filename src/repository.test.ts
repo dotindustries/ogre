@@ -7,17 +7,24 @@ import ProcessTemplate = templates.ProcessTemplate
 test('reconstruction', async t => {
   const [ repo, wrapped ] = await getBaseline()
 
-  updateHeaderData(wrapped)
-  await repo.commit('header data', testAuthor)
+  let changeEntries = updateHeaderData(wrapped)
+  const header = await repo.commit('header data', testAuthor)
 
-  addOneStep(wrapped)
-  await repo.commit('first step', testAuthor)
+  changeEntries += addOneStep(wrapped)
+  const firstStep = await repo.commit('first step', testAuthor)
+
+  console.log(`header commit: ${header}`)
+  console.log(`firstStep commit: ${firstStep}`)
+  const history = repo.getHistory()
+  t.is(repo.head(), 'refs/heads/main', 'HEAD is wrong')
+  t.is(repo.ref('refs/heads/main'), firstStep, 'main is pointing at wrong commit')
+  t.is(history.commits.length, 2, 'incorrect # of commits')
 
   // start reconstruction
   const p = new ProcessTemplate()
-  const repo2 = new Repository(p, { history: repo.getHistory() })
+  const repo2 = new Repository(p, { history })
 
-  const history = repo2.getHistory()
-  t.is(sumChanges(history.commits), 6, 'incorrect # of changelog entries')
-  t.is(history.commits.length, 2, 'incorrect # of commits')
+  const history2 = repo2.getHistory()
+  t.is(history2.commits.length, 2, 'incorrect # of commits')
+  t.is(sumChanges(history2.commits), changeEntries, 'incorrect # of changelog entries')
 })

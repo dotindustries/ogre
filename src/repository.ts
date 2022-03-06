@@ -27,11 +27,6 @@ export interface RepositoryObject<T> {
 
   logs(commits?: number): void
 
-  // Helper method - mainly for testing - to create a new VersionControlledObject from the current one's history.
-  // It essentially involves only two steps:
-  // 1. creating a new instance of the underlying data type (T)
-  // 2. constructing a new VersionControlled object with the new instance
-  //    passing in the history of the current instance
   createBranch(name: string): string
 
   merge(source: string | RepositoryObject<T> | History): string
@@ -205,15 +200,30 @@ export const Repository = function <T extends { [k: PropertyKey]: any }>(
 
   this.getChangeLog = () => [...changeLog]
 
+  const collectCommits = () => {
+    const commit = commitAtHead()
+    if (!commit) {
+      return []
+    }
+    // traverse backwards and build commit tree
+    let c: Commit | undefined = commit
+    let commitsList: Commit[] = []
+    while (c !== undefined) {
+      commitsList = [c, ...commitsList]
+      c = commits.find(parent => parent.hash === c?.parent)
+    }
+    return commitsList
+  }
+
   this.getHistory = (): History => {
     // only send back shallow copies of changelog and commits up to current version
     return {
       refs: new Map(refs),
-      commits: [...commits.filter((c) => c.to <= version)]
+      commits: collectCommits()
     }
   }
 
-  const commitAt = (ref: string, references: Map<string, Reference>, commitsList: Commit[]) => {
+  const commitAtHeadIn = (ref: string, references: Map<string, Reference>, commitsList: Commit[]) => {
     const reference = references.get(ref)
     if (!reference) {
       throw new Error(`unreachable: '${ref}' is not present`)
@@ -239,7 +249,7 @@ export const Repository = function <T extends { [k: PropertyKey]: any }>(
   }
 
   const commitAtHead = () => {
-    return commitAt(REFS_HEAD, refs, commits)
+    return commitAtHeadIn(REFS_HEAD, refs, commits)
   }
   const mustCommitAtHead = () => {
     const commitHead = commitAtHead()
@@ -289,11 +299,13 @@ export const Repository = function <T extends { [k: PropertyKey]: any }>(
     }
     commits.push(commit)
 
-    const head = refs.get(REFS_HEAD)?.value
-    // ignore sha
-    if (head?.includes(refPrefix)) {
+    const headRef = this.head()
+    if (headRef.includes('refs')) {
       // but move ref: refs/heads/main
-      moveRef(cleanRefValue(head), commit)
+      moveRef(headRef, commit)
+    } else {
+      // move detached HEAD to new commit
+      moveRef(REFS_HEAD, commit)
     }
 
     return sha
@@ -332,7 +344,7 @@ export const Repository = function <T extends { [k: PropertyKey]: any }>(
         sha = ref.value
         if (sha.includes(refPrefix)) {
           const cleanedRef = cleanRefValue(sha)
-          const c = commitAt(cleanedRef, refs, commits)
+          const c = commitAtHeadIn(cleanedRef, refs, commits)
           if (!c) {
             throw new Error(`${cleanedRef} points to non-existing commit`)
           }
@@ -423,7 +435,7 @@ export const Repository = function <T extends { [k: PropertyKey]: any }>(
     //   https://github.com/isomorphic-git/isomorphic-git/blob/a623133345a5d8b6bb7a8352ea9702ce425d8266/src/utils/mergeTree.js#L33
 
     if (typeof source !== 'string') {
-      // const srcHead = commitAt(REFS_HEAD, src.refs, src.commits)
+      // const srcHead = commitAtHeadIn(REFS_HEAD, src.refs, src.commits)
       throw new Error(`fatal: source type (${source instanceof Repository ? 'Repository' : 'History'}) not implemented`)
     }
 
