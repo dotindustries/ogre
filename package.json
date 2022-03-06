@@ -1,8 +1,8 @@
 {
-  "name": "versioning",
+  "name": "@dotindustries/ogre",
   "version": "0.0.0",
-  "private": true,
-  "description": "Version Control library",
+  "private": false,
+  "description": "In-memory git-like repository for objects",
   "main": "src/index.ts",
   "types": "src/index.ts",
   "scripts": {
@@ -10,9 +10,9 @@
     "build.watch": "tsc --build --watch",
     "test": "nyc ava",
     "test.watch": "ava --watch",
-    "coverage:report.html": "nyc report --reporter=html",
-    "coverage:report.coveralls": "nyc report --reporter=text-lcov | coveralls",
-    "coverage:report": "nyc report"
+    "coverage:html": "nyc report --reporter=html",
+    "coverage:coveralls": "nyc report --reporter=text-lcov | coveralls",
+    "coverages": "nyc report"
   },
   "ava": {
     "timeout": "60s",
@@ -28,8 +28,6 @@
   },
   "author": "János Veres @nadilas",
   "license": "MIT",
-  "dependencies": {
-  },
   "devDependencies": {
     "typescript": "^4.5.5",
     "@types/uuid": "^8.3.4",
