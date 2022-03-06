@@ -2,7 +2,7 @@ import test from 'ava'
 import { addOneStep, getBaseline, sumChanges, testAuthor, updateHeaderData } from './test.utils'
 
 test('baseline with 1 commit and zero changelog entries', async t => {
-  const [ repo ] = await getBaseline()
+  const [repo] = await getBaseline()
 
   const history = repo.getHistory()
   t.is(sumChanges(history.commits), 0, 'has changelog entries')
@@ -46,11 +46,11 @@ test('main moves to recent commit', async t => {
   repo.data.name = 'new name'
   const hash = await repo.commit('baseline', testAuthor)
 
-  t.is (repo.ref('refs/heads/main'), hash, 'head does not point to recent commit')
+  t.is(repo.ref('refs/heads/main'), hash, 'head does not point to recent commit')
 })
 
 test('two commits with 3 changes', async t => {
-  const [ repo, wrapped ] = await getBaseline()
+  const [repo, wrapped] = await getBaseline()
   updateHeaderData(wrapped)
   await repo.commit('header data', testAuthor)
 
@@ -60,7 +60,7 @@ test('two commits with 3 changes', async t => {
 })
 
 test('array push double-change, 6 changes, 3 commits', async t => {
-  const [ repo, wrapped ] = await getBaseline()
+  const [repo, wrapped] = await getBaseline()
 
   updateHeaderData(wrapped)
   await repo.commit('header data', testAuthor)
