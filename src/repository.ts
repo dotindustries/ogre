@@ -23,7 +23,7 @@ export interface RepositoryObject<T> {
 
   commit(message: string, author: string): Promise<string>
 
-  checkout(shaish: string): void
+  checkout(shaish: string, createBranch?: boolean): void
 
   logs(commits?: number): void
 
@@ -346,12 +346,15 @@ export const Repository = function <T extends { [k: PropertyKey]: any }>(
     return [found[0], isRef, refKey]
   }
 
-  this.checkout = (shaish) => {
-    const [commit, isRef, refKey] = shaishToCommit(shaish)
-
-    rebuildChangeLog(commit)
-
-    moveRef(REFS_HEAD, isRef && refKey !== undefined ? refKey : commit)
+  this.checkout = (shaish, createBranch = false) => {
+    if (createBranch) {
+      validateBranchName(shaish)
+      moveRef(REFS_HEAD, brancheNameToRef(shaish))
+    } else {
+      const [commit, isRef, refKey] = shaishToCommit(shaish)
+      rebuildChangeLog(commit)
+      moveRef(REFS_HEAD, isRef && refKey !== undefined ? refKey : commit)
+    }
   }
 
   this.branch = () => {
@@ -369,11 +372,19 @@ export const Repository = function <T extends { [k: PropertyKey]: any }>(
     return REFS_HEAD // detached state
   }
 
-  this.createBranch = (name) => {
-  if (!validBranch(name)) {
-    throw new Error(`invalid ref name`)
+  const brancheNameToRef = (name: string) => {
+    return `refs/heads/${name}`
   }
-    const refName = `refs/heads/${name}`
+
+  const validateBranchName = (name: string) => {
+    if (!validBranch(name)) {
+      throw new Error(`invalid ref name`)
+    }
+  }
+
+  this.createBranch = (name) => {
+    validateBranchName(name)
+    const refName = brancheNameToRef(name)
     const headCommit = commitAtHead()
     if (!headCommit) {
       const headRef = this.head()

@@ -17,7 +17,7 @@ test('first commit goes onto default \'main\' branch', async t => {
   t.is(repo.head(), 'refs/heads/main', 'invalid HEAD')
 })
 
-test('fails to create a branch name without commits', async t => {
+test('fails to create a branch without commits', async t => {
   const [ repo ] = await getBaseline()
 
   t.throws(() => {

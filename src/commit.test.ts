@@ -68,4 +68,15 @@ test('array push double-change, 6 changes, 3 commits', async t => {
 })
 
 test.todo('commit --amend')
-test.todo('commit on new branch does not move main ref')
+
+test('all refs OK, when committing on new branch while main is empty main', async t => {
+  const [repo] = await getBaseline()
+  repo.checkout('new_feature', true)
+  repo.data.name = 'new name'
+  const commit = await repo.commit('simple change', testAuthor)
+
+  t.is(repo.ref('refs/heads/main'), undefined, 'main should not point to a commit')
+  t.is(repo.ref('refs/heads/new_feature'), commit, 'new_feature should point to last commit')
+  t.is(repo.branch(), 'new_feature', 'branch should now be visible')
+  t.is(repo.head(), 'refs/heads/new_feature', 'HEAD is pointing to wrong branch')
+})

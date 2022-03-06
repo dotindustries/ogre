@@ -59,3 +59,11 @@ test('checkout new branch moves head to new branch', async t => {
   repo.checkout('new_feature')
   t.is(repo.head(), ref, 'head is not moved to target branch')
 })
+
+test('checkout and create new branch on empty main', async t => {
+  const [repo] = await getBaseline()
+
+  repo.checkout('new_feature', true)
+  t.is(repo.head(), 'refs/heads/new_feature', 'head should point to empty branch')
+  t.is(repo.branch(), 'HEAD', 'branch still should be empty')
+})

@@ -13,27 +13,6 @@ test('merge with no commit fails', async t => {
   }, { message: 'already up to date'})
 })
 
-// test.failing('merge with no diff', async t => {
-//   const [ master, wrappedObject ] = await getBaseline()
-//
-//   updateHeaderData(wrappedObject)
-//   await master.commit('header data', testAuthor)
-//
-//   addOneStep(wrappedObject)
-//   await master.commit('first step', testAuthor)
-//   const headRef = master.head()
-//   const atCommit = master.ref(headRef)
-//
-//   // create new branch
-//   const ref = master.createBranch('new_feature')
-//   t.is(sumChanges(newBranch.getHistory()?.commits), 6, 'new branch w/ incorrect # of changlog')
-//
-//   t.throws(() => {
-//     // merge in master branch from new branch
-//     master.merge(newBranch)
-//   }, {message: `already at commit: ${atCommit}`})
-// })
-//
 // test.failing('merge fast-forward with empty master', async t => {
 //   const master = new Repository(new ProcessTemplate(), {TCreator: ProcessTemplate})
 //   const masterCommitCount = master.getHistory().commits.length
