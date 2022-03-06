@@ -2,16 +2,16 @@ import { Change, History, Reference } from './interfaces'
 import { calculateHash, Commit } from './commit'
 import { validBranch } from './ref'
 
+const REFS_HEAD = 'HEAD'
+const REFS_MAIN = 'refs/heads/main'
+const refPrefix = 'ref: '
+
 export interface RepositoryOptions<T> {
   history?: History
 }
 
 export interface RepositoryObject<T> {
   data: T
-
-  printChangeLog(upTo?: number): void
-
-  getChangeLog(): Change[]
 
   getHistory(): History
 
@@ -39,10 +39,9 @@ export interface RespositoryObjectType {
   new<T>(obj: T, options: RepositoryOptions<T>): RepositoryObject<T>
 }
 
-const REFS_HEAD = 'HEAD'
-const REFS_MAIN = 'refs/heads/main'
-
-const refPrefix = 'ref: '
+/**
+ * A repository recording and managing the state transitions of an object
+ */
 export const Repository = function <T extends { [k: PropertyKey]: any }>(
   this: RepositoryObject<T>,
   obj: T,
@@ -148,20 +147,60 @@ export const Repository = function <T extends { [k: PropertyKey]: any }>(
 
   this.data = new Proxy(obj, handler)
 
-  // region Logs
-  this.printChangeLog = (upTo) => {
-    console.log('----------------------------------------------------------')
-    console.log(`Changelog at v${version}`)
-    const changeLog = this.getChangeLog()
-    for (const [i, chg] of changeLog.entries()) {
-      if (upTo && i >= upTo) {
-        return
-      }
-
-      console.log(`  ${JSON.stringify(chg)}`)
+  // region Read state read
+  this.head = () => {
+    const ref = refs.get(REFS_HEAD)
+    if (!ref) {
+      throw new Error(`unreachable: HEAD is not present`)
+    }
+    return cleanRefValue(ref.value)
+  }
+  this.ref = (reference) => {
+    const ref = refs.get(reference)?.value
+    return ref ? cleanRefValue(ref) : undefined
+  }
+  this.branch = () => {
+    const currentHeadRef = refs.get(REFS_HEAD)
+    if (!currentHeadRef) {
+      throw new Error('unreachable: ref HEAD not available')
     }
 
-    console.log('----------------------------------------------------------')
+    if (currentHeadRef.value.includes(refPrefix)) {
+      const refName = cleanRefValue(currentHeadRef.value)
+      if (refs.has(refName))
+        return getLastItem(refName)
+    }
+
+    return REFS_HEAD // detached state
+  }
+  // endregion
+
+  // region History functions
+  const collectCommits = () => {
+    const commit = commitAtHead()
+    if (!commit) {
+      return []
+    }
+    // traverse backwards and build commit tree
+    let c: Commit | undefined = commit
+    let commitsList: Commit[] = []
+    while (c !== undefined) {
+      commitsList = [c, ...commitsList]
+      c = commits.find(parent => parent.hash === c?.parent)
+    }
+    return commitsList
+  }
+  const rebuildChangeLog = (commit: Commit) => {
+    // clear current state
+    changeLog.splice(0)
+    version = 0
+
+    // traverse backwards and build changelog
+    let clog = traverseAndCollectChangelog(commit, commits)
+    changeLog.push(...clog)
+
+    // process new changelog
+    gotoLastVersion()
   }
   this.logs = (numberOfCommits) => {
     const limit = numberOfCommits ?? -1
@@ -185,36 +224,6 @@ export const Repository = function <T extends { [k: PropertyKey]: any }>(
   }
   // endregion
 
-  this.head = () => {
-    const ref = refs.get(REFS_HEAD)
-    if (!ref) {
-      throw new Error(`unreachable: HEAD is not present`)
-    }
-    return cleanRefValue(ref.value)
-  }
-
-  this.ref = (reference) => {
-    const ref = refs.get(reference)?.value
-    return ref ? cleanRefValue(ref) : undefined
-  }
-
-  this.getChangeLog = () => [...changeLog]
-
-  const collectCommits = () => {
-    const commit = commitAtHead()
-    if (!commit) {
-      return []
-    }
-    // traverse backwards and build commit tree
-    let c: Commit | undefined = commit
-    let commitsList: Commit[] = []
-    while (c !== undefined) {
-      commitsList = [c, ...commitsList]
-      c = commits.find(parent => parent.hash === c?.parent)
-    }
-    return commitsList
-  }
-
   this.getHistory = (): History => {
     // only send back shallow copies of changelog and commits up to current version
     return {
@@ -223,31 +232,7 @@ export const Repository = function <T extends { [k: PropertyKey]: any }>(
     }
   }
 
-  const commitAtHeadIn = (ref: string, references: Map<string, Reference>, commitsList: Commit[]) => {
-    const reference = references.get(ref)
-    if (!reference) {
-      throw new Error(`unreachable: '${ref}' is not present`)
-    }
-    let commitHash
-    if (reference.value.includes(refPrefix)) {
-      const refKey = cleanRefValue(reference.value)
-      const targetRef = references.get(refKey)
-      if (!targetRef) {
-        // target branch may not have been saved yet
-        return undefined
-      }
-      commitHash = targetRef.value
-    } else {
-      commitHash = reference.value
-    }
-    for (const c of commitsList) {
-      if (c.hash === commitHash) {
-        return c
-      }
-    }
-    return undefined
-  }
-
+  // region Commit lookups
   const commitAtHead = () => {
     return commitAtHeadIn(REFS_HEAD, refs, commits)
   }
@@ -258,6 +243,7 @@ export const Repository = function <T extends { [k: PropertyKey]: any }>(
     }
     return commitHead
   }
+  // endregion
 
   this.commit = async (message, author, amend = false): Promise<string> => {
     let parent = commitAtHead()
@@ -266,7 +252,7 @@ export const Repository = function <T extends { [k: PropertyKey]: any }>(
     }
     if (parent) {
       if (amend) {
-        [parent] = parent.parent ? shaishToCommit(parent.parent) : [undefined]
+        [parent] = parent.parent ? shaishToCommit(parent.parent, refs, commits) : [undefined]
       }
     }
     const changesSinceLastCommit = changeLog.slice(parent?.to)
@@ -311,96 +297,17 @@ export const Repository = function <T extends { [k: PropertyKey]: any }>(
     return sha
   }
 
-  const rebuildChangeLog = (commit: Commit) => {
-    // clear current state
-    changeLog.splice(0)
-    version = 0
-
-    // traverse backwards and build changelog
-    let c: Commit | undefined = commit
-    let clog: Change[] = []
-    while (c !== undefined) {
-      clog = [...commit.changes, ...clog]
-      c = commits.find(parent => parent.hash === c?.parent)
-    }
-    changeLog.push(...clog)
-
-    // process new changelog
-    gotoLastVersion()
-  }
-
-  // accept a shaish expression (e.g. branch, tag, refs/*/*, commitSha)
-  const shaishToCommit = (shaish: string): [commit: Commit, isRef: boolean, ref: string | undefined] => {
-    let sha = shaish
-    let isRef = false
-    let refKey: string | undefined = undefined
-
-    // check for refs
-    for (const [name, ref] of refs.entries()) {
-      // match on
-      if (ref.name === shaish || name === shaish) {
-        isRef = true
-        refKey = name
-        sha = ref.value
-        if (sha.includes(refPrefix)) {
-          const cleanedRef = cleanRefValue(sha)
-          const c = commitAtHeadIn(cleanedRef, refs, commits)
-          if (!c) {
-            throw new Error(`${cleanedRef} points to non-existing commit`)
-          }
-          return [c, isRef, refKey]
-        }
-        break
-      }
-    }
-    // check for partial sha matches
-    const found = commits.filter(c => c.hash.indexOf(sha) > -1)
-    if (found.length === 0) {
-      throw new Error(`${shaish} does not belong to repository`)
-    }
-    // but sha should be specific enough to resolve to 1 commit
-    if (found.length > 1) {
-      throw new Error(`commit `)
-    }
-    return [found[0], isRef, refKey]
-  }
-
+  // region Graph manipulation
   this.checkout = (shaish, createBranch = false) => {
     if (createBranch) {
       validateBranchName(shaish)
       moveRef(REFS_HEAD, brancheNameToRef(shaish))
     } else {
-      const [commit, isRef, refKey] = shaishToCommit(shaish)
+      const [commit, isRef, refKey] = shaishToCommit(shaish, refs, commits)
       rebuildChangeLog(commit)
       moveRef(REFS_HEAD, isRef && refKey !== undefined ? refKey : commit)
     }
   }
-
-  this.branch = () => {
-    const currentHeadRef = refs.get(REFS_HEAD)
-    if (!currentHeadRef) {
-      throw new Error('unreachable: ref HEAD not available')
-    }
-
-    if (currentHeadRef.value.includes(refPrefix)) {
-      const refName = cleanRefValue(currentHeadRef.value)
-      if (refs.has(refName))
-        return getLastItem(refName)
-    }
-
-    return REFS_HEAD // detached state
-  }
-
-  const brancheNameToRef = (name: string) => {
-    return `refs/heads/${name}`
-  }
-
-  const validateBranchName = (name: string) => {
-    if (!validBranch(name)) {
-      throw new Error(`invalid ref name`)
-    }
-  }
-
   this.createBranch = (name) => {
     validateBranchName(name)
     const refName = brancheNameToRef(name)
@@ -415,7 +322,6 @@ export const Repository = function <T extends { [k: PropertyKey]: any }>(
     refs.set(refName, { name: name, value: headCommit.hash })
     return refName
   }
-
   const moveRef = (refName: string, value: string | Commit) => {
     let ref = refs.get(refName)
     const val = typeof value === 'string' ? `${refPrefix}${value}` : value.hash
@@ -426,7 +332,6 @@ export const Repository = function <T extends { [k: PropertyKey]: any }>(
     }
     refs.set(refName, ref)
   }
-
   this.merge = source => {
     // inspiration
     // http://think-like-a-git.net
@@ -439,7 +344,7 @@ export const Repository = function <T extends { [k: PropertyKey]: any }>(
       throw new Error(`fatal: source type (${source instanceof Repository ? 'Repository' : 'History'}) not implemented`)
     }
 
-    const [srcCommit] = shaishToCommit(source)
+    const [srcCommit] = shaishToCommit(source, refs, commits)
     const headCommit = mustCommitAtHead()
 
     // no change
@@ -491,6 +396,7 @@ export const Repository = function <T extends { [k: PropertyKey]: any }>(
 
     throw new Error('unknown merge type: not implemented yet')
   }
+  // endregion
 
   // apply change log at the end of the constructor
   const headCommit = commitAtHead()
@@ -501,3 +407,118 @@ export const Repository = function <T extends { [k: PropertyKey]: any }>(
 
 const getLastItem = (thePath: string) => thePath.substring(thePath.lastIndexOf('/') + 1)
 const cleanRefValue = (ref: string) => ref.replace(refPrefix, '')
+const brancheNameToRef = (name: string) => {
+  return `refs/heads/${name}`
+}
+const validateBranchName = (name: string) => {
+  if (!validBranch(name)) {
+    throw new Error(`invalid ref name`)
+  }
+}
+
+/**
+ * Traverses the commit tree backwards and reassembles the changelog
+ * @param commit
+ * @param commitsList
+ */
+const traverseAndCollectChangelog = (commit: Commit, commitsList: Commit[]) => {
+  let c: Commit | undefined = commit
+  let clog: Change[] = []
+  while (c !== undefined) {
+    clog = [...commit.changes, ...clog]
+    c = commitsList.find(parent => parent.hash === c?.parent)
+  }
+  return clog
+}
+
+/**
+ * Returns the commit to which the provided ref is pointing
+ * @param ref - needs to be in key format, e.g. refs/heads/... or refs/tags/...
+ * @param references
+ * @param commitsList
+ */
+const commitAtHeadIn = (ref: string, references: Map<string, Reference>, commitsList: Commit[]) => {
+  const reference = references.get(ref)
+  if (!reference) {
+    throw new Error(`unreachable: '${ref}' is not present`)
+  }
+  let commitHash
+  if (reference.value.includes(refPrefix)) {
+    const refKey = cleanRefValue(reference.value)
+    const targetRef = references.get(refKey)
+    if (!targetRef) {
+      // target branch may not have been saved yet
+      return undefined
+    }
+    commitHash = targetRef.value
+  } else {
+    commitHash = reference.value
+  }
+  for (const c of commitsList) {
+    if (c.hash === commitHash) {
+      return c
+    }
+  }
+  return undefined
+}
+
+/**
+ * Accepts a shaish expression (e.g. refs (branches, tags), commitSha) and returns
+ * - a commit of type Commit
+ * - isRef boolean whether it is a direct reference
+ * - ref the key of the reference
+*/
+const shaishToCommit = (shaish: string, references: Map<string, Reference>, commitsList: Commit[]): [commit: Commit, isRef: boolean, ref: string | undefined] => {
+  let sha = shaish
+  let isRef = false
+  let refKey: string | undefined = undefined
+
+  // check for refs
+  for (const [name, ref] of references.entries()) {
+    // match on
+    if (ref.name === shaish || name === shaish) {
+      isRef = true
+      refKey = name
+      sha = ref.value
+      if (sha.includes(refPrefix)) {
+        const cleanedRef = cleanRefValue(sha)
+        const c = commitAtHeadIn(cleanedRef, references, commitsList)
+        if (!c) {
+          throw new Error(`${cleanedRef} points to non-existing commit`)
+        }
+        return [c, isRef, refKey]
+      }
+      break
+    }
+  }
+  // check for partial sha matches
+  const found = commitsList.filter(c => c.hash.indexOf(sha) > -1)
+  if (found.length === 0) {
+    throw new Error(`${shaish} does not belong to repository`)
+  }
+  // but sha should be specific enough to resolve to 1 commit
+  if (found.length > 1) {
+    throw new Error(`commit `)
+  }
+  return [found[0], isRef, refKey]
+}
+
+/**
+ * Prints the underlying changelog of a repository
+ * @param repository
+ */
+export const printChangeLog = <T>(repository: RepositoryObject<T>) => {
+  console.log('----------------------------------------------------------')
+  console.log(`Changelog at ${repository.head()}`)
+  const history = repository.getHistory()
+  const head = commitAtHeadIn(repository.head(), history.refs, history.commits)
+  if (!head) {
+    throw new Error(`fatal: HEAD is not defined`)
+  }
+  const changeLog = traverseAndCollectChangelog(head, history.commits)
+  for (const [, chg] of changeLog.entries()) {
+    console.log(`  ${JSON.stringify(chg)}`)
+  }
+
+  console.log('----------------------------------------------------------')
+}
