@@ -21,7 +21,7 @@ export interface RepositoryObject<T> {
   // Returns the commit hash to which a reference points
   ref(reference: string): string | undefined
 
-  commit(message: string, author: string): Promise<string>
+  commit(message: string, author: string, amend?: boolean): Promise<string>
 
   checkout(shaish: string, createBranch?: boolean): void
 
@@ -182,7 +182,7 @@ export const Repository = function <T extends { [k: PropertyKey]: any }>(
       console.log(`  ${commit.message}`)
       for (let j = commit.changes.length - 1; j >= 0; j--) {
         const chg = commit.changes[j]
-        console.log(`    ${(commit.from ?? 0) + j}:${JSON.stringify(chg)}`)
+        console.log(`    ${j}:${JSON.stringify(chg)}`)
       }
       counter++
       idx--
@@ -249,11 +249,15 @@ export const Repository = function <T extends { [k: PropertyKey]: any }>(
     return commitHead
   }
 
-  this.commit = async (message: string, author: string): Promise<string> => {
-    const parent = commitAtHead()
-    let from
+  this.commit = async (message, author, amend = false): Promise<string> => {
+    let parent = commitAtHead()
+    if (amend && !parent) {
+      throw new Error(`no commit to amend`)
+    }
     if (parent) {
-      from = parent.to
+      if (amend) {
+        [parent] = parent.parent ? shaishToCommit(parent.parent) : [undefined]
+      }
     }
     const changesSinceLastCommit = changeLog.slice(parent?.to)
     if (changesSinceLastCommit.length === 0) {
@@ -277,8 +281,11 @@ export const Repository = function <T extends { [k: PropertyKey]: any }>(
       changes: changes,
       parent: parent?.hash,
       timestamp,
-      from,
       to: version
+    }
+    if (amend) {
+      const idx = commits.findIndex(c => c === parent)
+      commits.splice(idx, 1)
     }
     commits.push(commit)
 

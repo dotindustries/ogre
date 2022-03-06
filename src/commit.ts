@@ -23,14 +23,6 @@ export interface Commit {
   // Commit timestamp with timezone
   timestamp: Date
 
-  // The version number to the corresponding changelog (not zero-based index)
-  // Therefore it can be used as an index, when accessing the changelog to
-  // retrieve the relevant changes e.g.:
-  // ```
-  // const changes = changeLog.slice(commit.from, commit.to)
-  // ```
-  from: number | undefined;
-
   // The version number to the corresponding changelog entry (not zero-based index)
   // Therefore it can be used as an index, when accessing the changelog to
   // retrieve the relevant changes e.g.:
