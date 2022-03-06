@@ -203,24 +203,16 @@ export const Repository = function <T extends { [k: PropertyKey]: any }>(
     gotoLastVersion()
   }
   this.logs = (numberOfCommits) => {
+    const logs: Commit[] = []
     const limit = numberOfCommits ?? -1
-    const history = this.getHistory()
-    let idx = history.commits.length - 1
+    let c = commitAtHead()
     let counter = 0
-    while (idx >= 0) {
-      if (limit == counter) {
-        break
-      }
-      const commit = history.commits[idx]
-      console.log(`${commit.hash} - ${commit.timestamp.toISOString()}`)
-      console.log(`  ${commit.message}`)
-      for (let j = commit.changes.length - 1; j >= 0; j--) {
-        const chg = commit.changes[j]
-        console.log(`    ${j}:${JSON.stringify(chg)}`)
-      }
+    while(c !== undefined && (limit === -1 || counter < limit)) {
+      logs.push(c, ...logs)
       counter++
-      idx--
+      c = commits.find(parent => parent.hash === c?.parent)
     }
+    return logs
   }
   // endregion
 
