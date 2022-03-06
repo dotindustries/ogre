@@ -119,12 +119,14 @@ test('commit --amend changes hash on message change', async t => {
 test('commit at detached HEAD does not affect main, but moves head', async t => {
   const [repo] = await getBaseline()
   repo.data.name = 'new name'
+  const v1 = repo.data
   const commit = await repo.commit('name change', testAuthor)
   repo.data.description = 'new fancy description'
   const last = await repo.commit('desc change', testAuthor)
   repo.checkout(commit)
   t.is(repo.head(), commit, 'HEAD did not move to commit')
   t.is(repo.branch(), 'HEAD', 'repo is not in detached state')
+  t.deepEqual(v1, repo.data, 'object state does not match')
 
   repo.data.description = 'a different description'
   const commitOnDetached = await repo.commit('msg', testAuthor)
