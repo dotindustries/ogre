@@ -8,8 +8,9 @@
   "scripts": {
     "build": "tsc --build",
     "build.watch": "tsc --build --watch",
-    "test": "ava",
-    "test.watch": "ava --watch"
+    "test": "nyc ava",
+    "test.watch": "ava --watch",
+    "report": "nyc report --reporter=html"
   },
   "ava": {
     "timeout": "60s",
@@ -33,6 +34,7 @@
     "uuid": "^8.3.2",
     "ava": "^4.0.1",
     "@ava/typescript": "^3.0.1",
+    "nyc": "^15.1.0",
     "config": "*"
   }
 }
