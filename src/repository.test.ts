@@ -8,13 +8,11 @@ test('reconstruction', async t => {
   const [ repo, wrapped ] = await getBaseline()
 
   let changeEntries = updateHeaderData(wrapped)
-  const header = await repo.commit('header data', testAuthor)
+  await repo.commit('header data', testAuthor)
 
   changeEntries += addOneStep(wrapped)
   const firstStep = await repo.commit('first step', testAuthor)
 
-  console.log(`header commit: ${header}`)
-  console.log(`firstStep commit: ${firstStep}`)
   const history = repo.getHistory()
   t.is(repo.head(), 'refs/heads/main', 'HEAD is wrong')
   t.is(repo.ref('refs/heads/main'), firstStep, 'main is pointing at wrong commit')
