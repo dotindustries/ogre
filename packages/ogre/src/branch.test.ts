@@ -1,5 +1,5 @@
 import test from 'ava'
-import { getBaseline, testAuthor } from './test.utils'
+import {getBaseline, sumChanges, testAuthor} from './test.utils'
 
 
 test('current branch on empty repo is HEAD', async t => {
@@ -19,8 +19,12 @@ test('first commit goes onto default \'main\' branch', async t => {
 
 test('fails to create a branch with empty repo', async t => {
   const [ repo ] = await getBaseline()
+  let history = repo.getHistory()
+  t.is(history.commits.length, 0, 'incorrect # of commits')
+  t.is(sumChanges(history?.commits), 0, 'new branch w/ incorrect # of changelog entries')
 
   t.throws(() => {
+    // cannot point new branch to nothing on empty repo
     repo.createBranch('new_feature')
   }, {message: 'fatal: not a valid object name: \'main\''})
 })
