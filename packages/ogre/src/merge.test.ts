@@ -1,5 +1,6 @@
 import test from 'ava'
-import { addOneStep, getBaseline, sumChanges, testAuthor, updateHeaderData } from './test.utils'
+import {ComplexObject, getBaseline, sumChanges, testAuthor} from './test.utils'
+import {Repository} from '../lib'
 
 test('merge with no commit fails', async t => {
   const [repo] = await getBaseline()
@@ -13,30 +14,35 @@ test('merge with no commit fails', async t => {
   }, { message: 'already up to date'})
 })
 
-// test.failing('merge fast-forward with empty master', async t => {
-//   const master = new Repository(new ProcessTemplate(), {TCreator: ProcessTemplate})
-//   const masterCommitCount = master.getHistory().commits.length
-//
-//   const [newBranch] = master.createBranch('new_feature')
-//   const history = newBranch.getHistory()
-//   t.is(sumChanges(history?.commits), 0, 'new branch w/ incorrect # of changelog entries')
-//
-//   newBranch.data.name = "name changed"
-//   newBranch.data.description = "description changed"
-//   const newHead = await newBranch.commit('description changes', testAuthor)
-//
-//
-//   t.notThrows(() => {
-//     const mergeHash = master.merge(newBranch)
-//     const headRef = master.head()
-//     const refHash = master.ref(headRef)
-//
-//     t.is(mergeHash, newHead, 'did not fast-forward to expected commit')
-//     t.is(refHash, mergeHash, `head@master is not the expected commit`)
-//     t.is(master.getHistory().commits.length, masterCommitCount+1, 'fast-forward failed, superfluous commit detected')
-//   }, 'threw unexpected error')
-// })
-//
+test.failing('merge fast-forward with empty master', async t => {
+  const repo = new Repository(new ComplexObject(), {})
+  const masterCommitCount = repo.getHistory().commits.length
+
+  // replacing default main branch by moving HEAD to new branch even on empty repo is OK
+  repo.checkout('new_feature', true)
+  const history = repo.getHistory()
+  t.is(sumChanges(history?.commits), 0, 'new branch w/ incorrect # of changelog entries')
+
+  repo.data.name = "name changed"
+  repo.data.description = "description changed"
+  const newHead = await repo.commit('description changes', testAuthor)
+
+  t.throws(() => {
+    // TODO: should throw an error, as this branch never existed in the first place?
+    repo.checkout('main')
+  }, {message: 'does not exists ... check git error explicitly'})
+
+  t.notThrows(() => {
+    const mergeHash = repo.merge('newBranch')
+    const headRef = repo.head()
+    const refHash = repo.ref(headRef)
+
+    t.is(mergeHash, newHead, 'did not fast-forward to expected commit')
+    t.is(refHash, mergeHash, `head@master is not the expected commit`)
+    t.is(repo.getHistory().commits.length, masterCommitCount+1, 'fast-forward failed, superfluous commit detected')
+  }, 'threw unexpected error')
+})
+
 // test.failing('merge fast-forward', async t => {
 //   const [ master, wrappedObject ] = await getBaseline()
 //   updateHeaderData(wrappedObject)
