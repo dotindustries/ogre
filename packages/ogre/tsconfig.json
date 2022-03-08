@@ -9,6 +9,8 @@
     "target": "es2019",
     "downlevelIteration": true
   },
-  "include": ["./src/**/*.ts"],
+  "include": [
+    "./src/**/*.ts"
+  ],
   "exclude": ["lib", "node_modules"]
 }
