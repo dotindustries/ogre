@@ -1,5 +1,9 @@
 {
   "name": "@dotinc/ogre",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dotindustries/ogre.git"
+  },
   "version": "0.0.0",
   "private": false,
   "description": "In-memory git-like repository for objects",
