@@ -17,12 +17,21 @@ test('first commit goes onto default \'main\' branch', async t => {
   t.is(repo.head(), 'refs/heads/main', 'invalid HEAD')
 })
 
-test('fails to create a branch without commits', async t => {
+test('fails to create a branch with empty repo', async t => {
   const [ repo ] = await getBaseline()
 
   t.throws(() => {
     repo.createBranch('new_feature')
   }, {message: 'fatal: not a valid object name: \'main\''})
+})
+
+test('checkout new branch with empty repo', async t => {
+  const [ repo ] = await getBaseline()
+
+  repo.checkout('new_feature', true)
+  t.is(repo.head(), 'refs/heads/new_feature', 'HEAD did not move to new branch')
+  t.is(repo.ref('/refs/heads/main'), undefined, 'main should not be pointing to anything')
+  t.is(repo.ref('refs/heads/new_feature'), undefined, 'new_feature should not be pointing to anything')
 })
 
 test('creating a valid branch on a baseline', async t => {
