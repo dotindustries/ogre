@@ -1,5 +1,5 @@
 {
-  "name": "@dotindustries/ogre",
+  "name": "@dotinc/ogre",
   "version": "0.0.0",
   "private": false,
   "description": "In-memory git-like repository for objects",
