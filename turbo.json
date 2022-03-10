@@ -21,6 +21,10 @@
     "coverage": {
       "dependsOn": ["^test"],
       "outputs": [".nyc_output/**"]
+    },
+    "coverage:coveralls": {
+      "dependsOn": ["^test"],
+      "outputs": ["/coverage/lcov.info"]
     }
   }
 }

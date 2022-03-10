@@ -12,7 +12,8 @@
     "lint": "turbo run lint",
     "test": "turbo run test",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "release": "dotenv npm run build && auto shipit"
+    "release": "dotenv npm run build && auto shipit",
+    "coverage:coveralls": "turbo run coverage:coveralls"
   },
   "license": "MIT",
   "devDependencies": {
