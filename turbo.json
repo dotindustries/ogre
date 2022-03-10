@@ -9,7 +9,7 @@
     "test": {
       "cache": false,
       "dependsOn": ["^build"],
-      "outputs": []
+      "outputs": ["coverage/**", ".nyc_output/**"]
     },
     "test.watch": {
       "cache": false
@@ -17,14 +17,6 @@
     "coverage:html": {
       "dependsOn": ["^test"],
       "outputs": ["coverage/**"]
-    },
-    "coverage": {
-      "dependsOn": ["^test"],
-      "outputs": [".nyc_output/**"]
-    },
-    "coverage:coveralls": {
-      "dependsOn": ["^test"],
-      "outputs": ["/coverage/lcov.info"]
     }
   }
 }

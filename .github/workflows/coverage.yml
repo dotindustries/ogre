@@ -13,11 +13,10 @@ jobs:
           node-version: 17
 
       - run: npm ci
+      - run: npm run test
 
-      - run: npm run coverage:coveralls
-
-      - name: Ogre coveralls
-        uses: coverallsapp/github-action@master
+      - uses: codecov/codecov-action@v2
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          path-to-lcov: ${{ github.workspace }}/packages/ogre/coverage/lcov.info
+          # token: ${{ secrets.CODECOV_TOKEN }} # not required for public repos
+          fail_ci_if_error: true # optional (default = false)
+          verbose: true # optional (default = false)
