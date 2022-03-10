@@ -11,16 +11,25 @@
     "dev": "turbo run dev --parallel",
     "lint": "turbo run lint",
     "test": "turbo run test",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\""
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "release": "dotenv npm run build && auto shipit"
   },
   "license": "MIT",
   "devDependencies": {
+    "auto": "^10.34.1",
+    "dotenv-cli": "^5.0.0",
     "prettier": "^2.5.1",
     "turbo": "latest"
   },
   "engines": {
     "npm": ">=7.0.0",
     "node": ">=17.0.0"
+  },
+  "auto": {
+    "plugins": [
+      "npm",
+      "released"
+    ]
   },
   "packageManager": "npm@8.5.1"
 }
