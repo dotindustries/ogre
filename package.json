@@ -22,6 +22,7 @@
   "license": "MIT",
   "devDependencies": {
     "@auto-it/conventional-commits": "^10.34.1",
+    "@auto-it/microsoft-teams": "^10.34.1",
     "@auto-it/npm": "^10.34.1",
     "@auto-it/released": "^10.34.1",
     "auto": "^10.34.1",
@@ -37,7 +38,8 @@
     "plugins": [
       "npm",
       "released",
-      "conventional-commits"
+      "conventional-commits",
+      "microsoft-teams"
     ]
   },
   "packageManager": "npm@8.5.1"

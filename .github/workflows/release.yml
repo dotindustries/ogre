@@ -24,5 +24,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          MICROSOFT_TEAMS_WEBHOOK_URL: ${{ secrets.MICROSOFT_TEAMS_WEBHOOK_URL }}
         run: |
           npm run release
