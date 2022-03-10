@@ -14,7 +14,7 @@
     "test.watch": "ava --watch",
     "coverage": "nyc report",
     "coverage:html": "nyc report --reporter=html",
-    "coverage:coveralls": "mkdir -p coverage && npm run coverage && nyc report --reporter=text-lcov > ./coverage/lcov.info && pwd && stat ./coverage/lcov.info"
+    "coverage:coveralls": "mkdir -p coverage && npm run test && nyc report --reporter=text-lcov > ./coverage/lcov.info && pwd && stat ./coverage/lcov.info"
   },
   "ava": {
     "timeout": "60s",
