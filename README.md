@@ -3,7 +3,7 @@
 An in-memory git-like repository for objects for when you need to 
 keep the history around for a bit longer.
 
-[![Coverage Status](https://coveralls.io/repos/github/dotindustries/ogre/badge.svg?branch=main)](https://coveralls.io/github/dotindustries/ogre?branch=main) [![Test coverage](https://github.com/dotindustries/ogre/actions/workflows/coveralls.yml/badge.svg)](https://github.com/dotindustries/ogre/actions/workflows/coveralls.yml)
+[![codecov](https://codecov.io/gh/dotindustries/ogre/branch/main/graph/badge.svg?token=23M014CWLK)](https://codecov.io/gh/dotindustries/ogre) [![Test coverage](https://github.com/dotindustries/ogre/actions/workflows/coveralls.yml/badge.svg)](https://github.com/dotindustries/ogre/actions/workflows/coveralls.yml)
 
 ## Features
 
