@@ -293,7 +293,12 @@ export const Repository = function <T extends { [k: PropertyKey]: any }>(
   this.checkout = (shaish, createBranch = false) => {
     if (createBranch) {
       validateBranchName(shaish)
-      moveRef(REFS_HEAD, brancheNameToRef(shaish))
+      let branchRef = brancheNameToRef(shaish)
+      const commit = commitAtHead()
+      if (commit) {
+        moveRef(branchRef, commit)
+      }
+      moveRef(REFS_HEAD, branchRef)
     } else {
       const [commit, isRef, refKey] = shaishToCommit(shaish, refs, commits)
       rebuildChangeLog(commit)
@@ -355,23 +360,12 @@ export const Repository = function <T extends { [k: PropertyKey]: any }>(
     // *---*
     //      \
     //       *---*---* (master, foo)
-    // const indexOfMasterHeadOnSrc = src.commits.indexOf(masterHead)
-    // if (masterHead === undefined || indexOfMasterHeadOnSrc > -1) {
-    //   const commitsToMerge = src.commits.slice(indexOfMasterHeadOnSrc + 1)
-    //   for (const c of commitsToMerge) {
-    //     commits.push(c)
-    //   }
-    //
-    //   moveRef(this.head(), commitsToMerge[commitsToMerge.length - 1])
-    //
-    //   // let version catch up
-    //   const commitHEAD = commitAtHead()
-    //   if (!commitHEAD) {
-    //     throw new Error(`HEAD at destination does not point to any commits`)
-    //   }
-    //   rebuildChangeLog(commitHEAD)
-    //   return commitHEAD.hash // ff to last commit in source
-    // }
+    const [isAncestor] = mapPath(headCommit, srcCommit, commits)
+    if (isAncestor) {
+      moveRef(this.head(), srcCommit)
+      rebuildChangeLog(srcCommit)
+      return srcCommit.hash
+    }
 
     // todo diverge
     // *---*---* (master)
@@ -421,6 +415,17 @@ const traverseAndCollectChangelog = (commit: Commit, commitsList: Commit[]) => {
     c = commitsList.find(parent => parent.hash === c?.parent)
   }
   return clog
+}
+
+const mapPath = (from: Commit, to: Commit, commits: Commit[]): [isAncestor: boolean] => {
+  let c: Commit | undefined = to
+  while (c !== undefined) {
+    c = commits.find(parent => parent.hash === c?.parent)
+    if (c?.hash === from.hash) {
+      return [true]
+    }
+  }
+  return [false]
 }
 
 /**
@@ -486,7 +491,7 @@ const shaishToCommit = (shaish: string, references: Map<string, Reference>, comm
   // check for partial sha matches
   const found = commitsList.filter(c => c.hash.indexOf(sha) > -1)
   if (found.length === 0) {
-    throw new Error(`${shaish} does not belong to repository`)
+    throw new Error(`pathspec '${shaish}' did not match any known refs`)
   }
   // but sha should be specific enough to resolve to 1 commit
   if (found.length > 1) {

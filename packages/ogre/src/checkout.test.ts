@@ -1,5 +1,6 @@
 import test from 'ava'
-import { addOneStep, getBaseline, sumChanges, testAuthor, updateHeaderData } from './test.utils'
+import {addOneStep, ComplexObject, getBaseline, sumChanges, testAuthor, updateHeaderData} from './test.utils'
+import {Repository} from './repository'
 
 test('checkout prev commit', async t => {
   const [ repo, wrapped ] = await getBaseline()
@@ -26,7 +27,7 @@ test('checkout new branch with simple name', async t => {
 
   const ref = repo.createBranch('new_feature')
   repo.checkout('new_feature')
-  t.is(repo.head(), ref, 'head is not moved to target branch')
+  t.is(repo.head(), ref, 'HEAD is not moved to target branch')
 })
 
 test('checkout new branch with full ref name', async t => {
@@ -36,7 +37,7 @@ test('checkout new branch with full ref name', async t => {
 
   const ref = repo.createBranch('new_feature')
   repo.checkout(ref)
-  t.is(repo.head(), ref, 'head is not moved to target branch')
+  t.is(repo.head(), ref, 'HEAD is not moved to target branch')
 })
 
 test('checkout commit which has two refs pointing leaves HEAD detached', async t => {
@@ -48,8 +49,8 @@ test('checkout commit which has two refs pointing leaves HEAD detached', async t
   repo.checkout(commit)
   t.is(repo.ref('refs/heads/main'), commit, 'main does not point to commit')
   t.is(repo.ref('refs/heads/new_feature'), commit, 'new_feature does not point to commit')
-  t.is(repo.branch(), 'HEAD', 'head is not detached at commit')
-  t.is(repo.head(), commit, 'head is not pointing to commit')
+  t.is(repo.branch(), 'HEAD', 'HEAD is not detached at commit')
+  t.is(repo.head(), commit, 'HEAD is not pointing to commit')
 })
 
 test('checkout new branch moves head to new branch', async t => {
@@ -59,13 +60,42 @@ test('checkout new branch moves head to new branch', async t => {
 
   const ref = repo.createBranch('new_feature')
   repo.checkout('new_feature')
-  t.is(repo.head(), ref, 'head is not moved to target branch')
+  t.is(repo.head(), ref, 'HEAD is not moved to target branch')
 })
 
 test('checkout and create new branch on empty main', async t => {
   const [repo] = await getBaseline()
 
   repo.checkout('new_feature', true)
-  t.is(repo.head(), 'refs/heads/new_feature', 'head should point to empty branch')
+  t.is(repo.head(), 'refs/heads/new_feature', 'HEAD should point to empty branch')
   t.is(repo.branch(), 'HEAD', 'branch still should be empty')
+})
+
+test('checkout and create new branch with at least 1 commit', async t => {
+  const [repo] = await getBaseline()
+  repo.data.name = 'new name'
+  const commit = await repo.commit('simple change', testAuthor)
+
+  repo.checkout('new_feature', true)
+  t.is(repo.head(), 'refs/heads/new_feature', 'HEAD should point to new branch')
+  t.is(repo.ref('refs/heads/new_feature'), commit, 'branch is not pointing to last HEAD commit')
+})
+
+
+test('replacing default branch on empty master removes main', async t => {
+  const repo = new Repository(new ComplexObject(), {})
+
+  // replacing default main branch by moving HEAD to new branch
+  // is OK even on empty repo
+  repo.checkout('new_feature', true)
+  const history = repo.getHistory()
+  t.is(sumChanges(history?.commits), 0, 'new branch w/ incorrect # of changelog entries')
+
+  repo.data.name = "name changed"
+  repo.data.description = "description changed"
+  await repo.commit('description changes', testAuthor)
+
+  t.throws(() => {
+    repo.checkout('main')
+  }, {message: `pathspec 'main' did not match any known refs`})
 })
