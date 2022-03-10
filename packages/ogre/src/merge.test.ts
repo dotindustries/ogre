@@ -1,6 +1,6 @@
 import test from 'ava'
 import {ComplexObject, getBaseline, sumChanges, testAuthor} from './test.utils'
-import {Repository} from '../lib'
+import {Repository} from './repository'
 
 test('merge with no commit fails', async t => {
   const [repo] = await getBaseline()
