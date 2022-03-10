@@ -6,13 +6,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
+
       - name: Use Node.js 10.x
         uses: actions/setup-node@v1
         with:
           node-version: 17
-      - run: npm install
+
+      - run: npm ci
+
       - run: npm run coverage:coveralls
-      - name: Coveralls
+
+      - name: Ogre coveralls
         uses: coverallsapp/github-action@master
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          base-path: 'packages/ogre'
