@@ -1,7 +1,6 @@
 {
   "name": "ogre",
   "version": "3.1.0",
-  "private": true,
   "author": {
     "name": "János Veres",
     "email": "janos@dot.industries"
