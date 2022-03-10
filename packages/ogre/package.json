@@ -5,8 +5,7 @@
     "url": "https://github.com/dotindustries/ogre.git"
   },
   "version": "0.0.0",
-  "private": false,
-  "description": "In-memory git-like repository for objects",
+  "description": "Git-like repository for in-memory object versioning",
   "main": "lib/index.ts",
   "types": "lib/index.d.ts",
   "scripts": {
