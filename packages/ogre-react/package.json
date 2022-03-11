@@ -1,6 +1,6 @@
 {
-  "name": "ogre-react",
-  "version": "0.1.0",
+  "name": "@dotinc/ogre-react",
+  "version": "0.0.0",
   "main": "./index.tsx",
   "types": "./index.tsx",
   "private": true,
@@ -11,5 +11,9 @@
     "tsconfig": "*",
     "config": "*",
     "typescript": "^4.5.3"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
   }
 }
