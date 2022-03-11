@@ -1,9 +1,7 @@
 # ogre
 
-An in-memory git-like repository for objects for when you need to 
+An in-memory git-like repository for objects for when you need to
 keep the history around for a bit longer.
-
-[![codecov](https://codecov.io/gh/dotindustries/ogre/branch/main/graph/badge.svg?token=23M014CWLK)](https://codecov.io/gh/dotindustries/ogre) [![Test coverage](https://github.com/dotindustries/ogre/actions/workflows/coverage.yml/badge.svg)](https://github.com/dotindustries/ogre/actions/workflows/coverage.yml)
 
 ## Features
 
