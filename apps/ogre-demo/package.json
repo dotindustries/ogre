@@ -1,6 +1,6 @@
 {
   "name": "ogre-demo",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -16,10 +16,10 @@
   "devDependencies": {
     "@types/node": "17.0.21",
     "@types/react": "17.0.39",
+    "config": "^0.1.0",
     "eslint": "8.10.0",
     "eslint-config-next": "12.1.0",
-    "typescript": "4.6.2",
-    "tsconfig": "*",
-    "config": "*"
+    "tsconfig": "^0.1.0",
+    "typescript": "4.6.2"
   }
 }
