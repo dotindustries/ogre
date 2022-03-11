@@ -1,3 +1,20 @@
+# v0.1.2 (Fri Mar 11 2022)
+
+#### 🐛 Bug Fix
+
+- fix: main package file ([@nadilas](https://github.com/nadilas))
+- fix: move tslib to dependencies ([@nadilas](https://github.com/nadilas))
+
+#### ⚠️ Pushed to `main`
+
+- chore: clean published packaage ([@nadilas](https://github.com/nadilas))
+
+#### Authors: 1
+
+- [@nadilas](https://github.com/nadilas)
+
+---
+
 # v0.1.1 (Fri Mar 11 2022)
 
 #### ⚠️ Pushed to `main`

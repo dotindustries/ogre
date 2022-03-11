@@ -1,5 +1,24 @@
 # (Fri Mar 11 2022)
 
+#### 🐛 Bug Fix
+
+- `@dotinc/ogre@0.1.2`
+  - fix: main package file ([@nadilas](https://github.com/nadilas))
+  - fix: move tslib to dependencies ([@nadilas](https://github.com/nadilas))
+
+#### ⚠️ Pushed to `main`
+
+- `@dotinc/ogre@0.1.2`
+  - chore: clean published packaage ([@nadilas](https://github.com/nadilas))
+
+#### Authors: 1
+
+- [@nadilas](https://github.com/nadilas)
+
+---
+
+# (Fri Mar 11 2022)
+
 #### ⚠️ Pushed to `main`
 
 - `@dotinc/ogre@0.1.1`
