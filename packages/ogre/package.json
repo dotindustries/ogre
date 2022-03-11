@@ -6,7 +6,7 @@
   },
   "version": "0.1.1",
   "description": "Git-like repository for in-memory object versioning",
-  "main": "lib/index.ts",
+  "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
