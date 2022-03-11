@@ -1,3 +1,16 @@
+# v0.1.1 (Fri Mar 11 2022)
+
+#### ⚠️ Pushed to `main`
+
+- Merge remote-tracking branch 'origin/main' ([@nadilas](https://github.com/nadilas))
+- doc: add LICENSE and README.md ([@nadilas](https://github.com/nadilas))
+
+#### Authors: 1
+
+- [@nadilas](https://github.com/nadilas)
+
+---
+
 # v0.1.0 (Fri Mar 11 2022)
 
 #### 🚀 Enhancement

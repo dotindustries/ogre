@@ -1,5 +1,19 @@
 # (Fri Mar 11 2022)
 
+#### ⚠️ Pushed to `main`
+
+- `@dotinc/ogre@0.1.1`
+  - Merge remote-tracking branch 'origin/main' ([@nadilas](https://github.com/nadilas))
+  - doc: add LICENSE and README.md ([@nadilas](https://github.com/nadilas))
+
+#### Authors: 1
+
+- [@nadilas](https://github.com/nadilas)
+
+---
+
+# (Fri Mar 11 2022)
+
 #### 🚀 Enhancement
 
 - Publishing [#3](https://github.com/dotindustries/ogre/pull/3) ([@nadilas](https://github.com/nadilas))
