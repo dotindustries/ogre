@@ -1,6 +1,7 @@
 {
   "name": "ogre",
-  "version": "3.1.0",
+  "version": "1.0.0",
+  "private": true,
   "author": {
     "name": "János Veres",
     "email": "janos@dot.industries"
@@ -25,6 +26,7 @@
     "@auto-it/released": "^10.34.1",
     "auto": "^10.34.1",
     "dotenv-cli": "^5.0.0",
+    "lerna": "^4.0.0",
     "prettier": "^2.5.1",
     "turbo": "latest"
   },
@@ -34,7 +36,12 @@
   },
   "auto": {
     "plugins": [
-      "npm",
+      [
+        "npm",
+        {
+          "monorepoChangelog": true
+        }
+      ],
       "released",
       "conventional-commits",
       "microsoft-teams"
