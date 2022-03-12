@@ -5,6 +5,14 @@
   "types": "./index.tsx",
   "private": true,
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dotindustries/ogre.git"
+  },
+  "dependencies": {
+    "@gitgraph/react": "^1.6.0",
+    "@dotinc/ogre": "*"
+  },
   "devDependencies": {
     "@types/react": "^17.0.39",
     "@types/react-dom": "^17.0.13",

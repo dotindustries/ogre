@@ -24,3 +24,15 @@ test('reconstruction', async t => {
   t.is(history2.commits.length, 2, 'incorrect # of commits')
   t.is(sumChanges(history2.commits), changeEntries, 'incorrect # of changelog entries')
 })
+
+test('history contains HEAD ref', async t => {
+  const [repo] = await getBaseline()
+
+  t.is(repo.head(), 'refs/heads/main')
+
+  const history = repo.getHistory()
+  let headRef = history.refs.get('HEAD')
+  t.not(headRef, undefined)
+  t.is(headRef!.name, 'HEAD')
+  t.is(headRef!.value, 'ref: refs/heads/main')
+})
