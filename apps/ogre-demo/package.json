@@ -11,7 +11,12 @@
   "dependencies": {
     "next": "12.1.0",
     "react": "17.0.2",
-    "react-dom": "17.0.2"
+    "react-dom": "17.0.2",
+    "@dotinc/ogre-react": "*",
+    "@dotinc/ogre": "*",
+    "next-transpile-modules": "^9.0.0",
+    "react-live": "3.0.0",
+    "polished": "^4.1.4"
   },
   "devDependencies": {
     "@types/node": "17.0.21",
@@ -19,7 +24,7 @@
     "config": "^0.1.1",
     "eslint": "8.10.0",
     "eslint-config-next": "12.1.0",
-    "tsconfig": "^0.1.1",
+    "tsconfig": "*",
     "typescript": "4.6.2"
   }
 }

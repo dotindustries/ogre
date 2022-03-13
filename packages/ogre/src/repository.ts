@@ -1,10 +1,15 @@
 import { Change, History, Reference } from './interfaces'
-import { calculateHash, Commit } from './commit'
+import { calculateCommitHash, Commit } from './commit'
 import { validBranch } from './ref'
+import {digest} from './hash'
 
-const REFS_HEAD = 'HEAD'
-const REFS_MAIN = 'refs/heads/main'
-const refPrefix = 'ref: '
+const tagRefPathPrefix = 'refs/tags/'
+const headsRefPathPrefix = 'refs/heads/'
+const headValueRefPrefix = 'ref: '
+
+export const REFS_HEAD_KEY = 'HEAD'
+export const REFS_MAIN_KEY = `${headsRefPathPrefix}main`
+
 
 export interface RepositoryOptions<T> {
   history?: History
@@ -49,9 +54,9 @@ export const Repository = function <T extends { [k: PropertyKey]: any }>(
 ) {
   let savedLength: number | undefined
   let version = 0
-  const refs: Map<string, Reference> = options.history?.refs ?? new Map<string, Reference>([[REFS_HEAD, {
-    name: REFS_HEAD,
-    value: `ref: ${REFS_MAIN}`
+  const refs: Map<string, Reference> = options.history?.refs ?? new Map<string, Reference>([[REFS_HEAD_KEY, {
+    name: REFS_HEAD_KEY,
+    value: `ref: ${REFS_MAIN_KEY}`
   }]])
   const changeLog: Change[] = []
   const targets: any[] = []
@@ -149,7 +154,7 @@ export const Repository = function <T extends { [k: PropertyKey]: any }>(
 
   // region Read state read
   this.head = () => {
-    const ref = refs.get(REFS_HEAD)
+    const ref = refs.get(REFS_HEAD_KEY)
     if (!ref) {
       throw new Error(`unreachable: HEAD is not present`)
     }
@@ -160,18 +165,18 @@ export const Repository = function <T extends { [k: PropertyKey]: any }>(
     return ref ? cleanRefValue(ref) : undefined
   }
   this.branch = () => {
-    const currentHeadRef = refs.get(REFS_HEAD)
+    const currentHeadRef = refs.get(REFS_HEAD_KEY)
     if (!currentHeadRef) {
       throw new Error('unreachable: ref HEAD not available')
     }
 
-    if (currentHeadRef.value.includes(refPrefix)) {
+    if (currentHeadRef.value.includes(headValueRefPrefix)) {
       const refName = cleanRefValue(currentHeadRef.value)
       if (refs.has(refName))
         return getLastItem(refName)
     }
 
-    return REFS_HEAD // detached state
+    return REFS_HEAD_KEY // detached state
   }
   // endregion
 
@@ -226,7 +231,7 @@ export const Repository = function <T extends { [k: PropertyKey]: any }>(
 
   // region Commit lookups
   const commitAtHead = () => {
-    return commitAtHeadIn(REFS_HEAD, refs, commits)
+    return commitAtRefIn(REFS_HEAD_KEY, refs, commits)
   }
   const mustCommitAtHead = () => {
     const commitHead = commitAtHead()
@@ -254,13 +259,14 @@ export const Repository = function <T extends { [k: PropertyKey]: any }>(
 
     const timestamp = new Date()
     const changes = [...changesSinceLastCommit]
-    const sha = await calculateHash({
+    const sha = await calculateCommitHash({
       message,
       author,
       changes,
       parentRef: parent?.hash,
       timestamp
     })
+    const treeHash = await digest(obj)
 
     const commit = {
       hash: sha,
@@ -269,7 +275,8 @@ export const Repository = function <T extends { [k: PropertyKey]: any }>(
       changes: changes,
       parent: parent?.hash,
       timestamp,
-      to: version
+      to: version,
+      tree: treeHash
     }
     if (amend) {
       const idx = commits.findIndex(c => c === parent)
@@ -283,7 +290,7 @@ export const Repository = function <T extends { [k: PropertyKey]: any }>(
       moveRef(headRef, commit)
     } else {
       // move detached HEAD to new commit
-      moveRef(REFS_HEAD, commit)
+      moveRef(REFS_HEAD_KEY, commit)
     }
 
     return sha
@@ -298,11 +305,11 @@ export const Repository = function <T extends { [k: PropertyKey]: any }>(
       if (commit) {
         moveRef(branchRef, commit)
       }
-      moveRef(REFS_HEAD, branchRef)
+      moveRef(REFS_HEAD_KEY, branchRef)
     } else {
       const [commit, isRef, refKey] = shaishToCommit(shaish, refs, commits)
       rebuildChangeLog(commit)
-      moveRef(REFS_HEAD, isRef && refKey !== undefined ? refKey : commit)
+      moveRef(REFS_HEAD_KEY, isRef && refKey !== undefined ? refKey : commit)
     }
   }
   this.createBranch = (name) => {
@@ -321,7 +328,7 @@ export const Repository = function <T extends { [k: PropertyKey]: any }>(
   }
   const moveRef = (refName: string, value: string | Commit) => {
     let ref = refs.get(refName)
-    const val = typeof value === 'string' ? `${refPrefix}${value}` : value.hash
+    const val = typeof value === 'string' ? createHeadRefValue(value) : value.hash
     if (!ref) {
       ref = { name: getLastItem(refName), value: val }
     } else {
@@ -337,7 +344,7 @@ export const Repository = function <T extends { [k: PropertyKey]: any }>(
     //   https://github.com/isomorphic-git/isomorphic-git/blob/a623133345a5d8b6bb7a8352ea9702ce425d8266/src/utils/mergeTree.js#L33
 
     if (typeof source !== 'string') {
-      // const srcHead = commitAtHeadIn(REFS_HEAD, src.refs, src.commits)
+      // const srcHead = commitAtRefIn(REFS_HEAD, src.refs, src.commits)
       throw new Error(`fatal: source type (${source instanceof Repository ? 'Repository' : 'History'}) not implemented`)
     }
 
@@ -392,15 +399,6 @@ export const Repository = function <T extends { [k: PropertyKey]: any }>(
 } as any as RespositoryObjectType
 
 const getLastItem = (thePath: string) => thePath.substring(thePath.lastIndexOf('/') + 1)
-const cleanRefValue = (ref: string) => ref.replace(refPrefix, '')
-const brancheNameToRef = (name: string) => {
-  return `refs/heads/${name}`
-}
-const validateBranchName = (name: string) => {
-  if (!validBranch(name)) {
-    throw new Error(`invalid ref name`)
-  }
-}
 
 /**
  * Traverses the commit tree backwards and reassembles the changelog
@@ -434,13 +432,13 @@ const mapPath = (from: Commit, to: Commit, commits: Commit[]): [isAncestor: bool
  * @param references
  * @param commitsList
  */
-const commitAtHeadIn = (ref: string, references: Map<string, Reference>, commitsList: Commit[]) => {
+const commitAtRefIn = (ref: string, references: Map<string, Reference>, commitsList: Commit[]) => {
   const reference = references.get(ref)
   if (!reference) {
     throw new Error(`unreachable: '${ref}' is not present`)
   }
   let commitHash
-  if (reference.value.includes(refPrefix)) {
+  if (reference.value.includes(headValueRefPrefix)) {
     const refKey = cleanRefValue(reference.value)
     const targetRef = references.get(refKey)
     if (!targetRef) {
@@ -477,9 +475,9 @@ const shaishToCommit = (shaish: string, references: Map<string, Reference>, comm
       isRef = true
       refKey = name
       sha = ref.value
-      if (sha.includes(refPrefix)) {
+      if (sha.includes(headValueRefPrefix)) {
         const cleanedRef = cleanRefValue(sha)
-        const c = commitAtHeadIn(cleanedRef, references, commitsList)
+        const c = commitAtRefIn(cleanedRef, references, commitsList)
         if (!c) {
           throw new Error(`${cleanedRef} points to non-existing commit`)
         }
@@ -500,6 +498,24 @@ const shaishToCommit = (shaish: string, references: Map<string, Reference>, comm
   return [found[0], isRef, refKey]
 }
 
+export const createHeadRefValue = (refKey: string) => {
+  return `${headValueRefPrefix}${refKey}`
+}
+
+export const isTagRef = (refKey: string) => refKey.indexOf(tagRefPathPrefix) > -1
+
+export const cleanRefValue = (ref: string) => ref.replace(headValueRefPrefix, '')
+
+export const brancheNameToRef = (name: string) => {
+  return `${headsRefPathPrefix}${name}`
+}
+
+export const validateBranchName = (name: string) => {
+  if (!validBranch(name)) {
+    throw new Error(`invalid ref name`)
+  }
+}
+
 /**
  * Prints the underlying changelog of a repository
  * @param repository
@@ -508,7 +524,7 @@ export const printChangeLog = <T>(repository: RepositoryObject<T>) => {
   console.log('----------------------------------------------------------')
   console.log(`Changelog at ${repository.head()}`)
   const history = repository.getHistory()
-  const head = commitAtHeadIn(repository.head(), history.refs, history.commits)
+  const head = commitAtRefIn(repository.head(), history.refs, history.commits)
   if (!head) {
     throw new Error(`fatal: HEAD is not defined`)
   }

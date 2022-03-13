@@ -32,6 +32,16 @@ test('no commit without changes after recent commit', async t => {
     return await repo.commit('baseline', testAuthor)
   }, { message: 'no changes to commit' })
 })
+
+test('treeHash of commit is matching content', async t => {
+  const [repo] = await getBaseline()
+  repo.data.name = 'new name'
+  await repo.commit('baseline', testAuthor)
+  const {commits} = repo.getHistory()
+  t.is(commits.length, 1)
+  t.not(commits[0].tree, '', 'tree hash mismatch')
+})
+
 test('no commit --amend without commit', async t => {
   const [repo] = await getBaseline()
   repo.data.name = 'new name'

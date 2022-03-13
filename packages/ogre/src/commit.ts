@@ -10,6 +10,7 @@ export interface Commit {
   // - author commit timestamp with timezone
   // - commit message
   hash: string
+  tree: string
 
   message: string | undefined
   author: string
@@ -32,7 +33,7 @@ export interface Commit {
   to: number;
 }
 
-export interface HashContent {
+export interface CommitHashContent {
   message: string
   author: string
   parentRef: string | undefined
@@ -40,6 +41,6 @@ export interface HashContent {
   timestamp: Date
 }
 
-export function calculateHash(content: HashContent) {
+export function calculateCommitHash(content: CommitHashContent) {
   return digest(content)
 }

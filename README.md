@@ -10,6 +10,7 @@ keep the history around for a bit longer.
 - Commit
 - Branch
 - Checkout
+- Visualization via `@dotinc/ogre-react`
 - Merge
     - fast-forward
 
@@ -47,7 +48,7 @@ repo.data.name = 'a fancier name'
 
 ## TODO
 
-- [ ] Visualization
+- [ ] Tags
 - [ ] Merge
     - [ ] recursive
     - [ ] octopus
