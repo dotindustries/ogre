@@ -1,6 +1,6 @@
 {
   "name": "ogre-demo",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -9,14 +9,14 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@dotinc/ogre": "^0.2.0",
+    "@dotinc/ogre-react": "^0.2.0",
     "next": "12.1.0",
+    "next-transpile-modules": "^9.0.0",
+    "polished": "^4.1.4",
     "react": "17.0.2",
     "react-dom": "17.0.2",
-    "@dotinc/ogre-react": "*",
-    "@dotinc/ogre": "*",
-    "next-transpile-modules": "^9.0.0",
-    "react-live": "3.0.0",
-    "polished": "^4.1.4"
+    "react-live": "3.0.0"
   },
   "devDependencies": {
     "@types/node": "17.0.21",
