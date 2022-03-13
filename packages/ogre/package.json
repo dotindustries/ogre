@@ -4,7 +4,7 @@
     "type": "git",
     "url": "https://github.com/dotindustries/ogre.git"
   },
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Git-like repository for in-memory object versioning",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
