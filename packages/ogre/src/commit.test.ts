@@ -159,7 +159,6 @@ test('commit at detached HEAD saved to a branch', async t => {
   t.is(repo.ref(savepointRef), commitOnDetached, 'savepoint branch should point to last detached commit')
 })
 
-
 test('commit --amend changes hash on message change even in detached HEAD', async t => {
   const [repo] = await getBaseline()
   repo.data.name = 'new name'
@@ -175,4 +174,26 @@ test('commit --amend changes hash on message change even in detached HEAD', asyn
   t.is(repo.branch(), 'HEAD', 'not in detached state')
   t.is(repo.head(), changedHash, 'HEAD is not pointing to detached commit')
   t.is(repo.ref('refs/heads/main'), descCommit, 'main should point to changed commit hash')
+})
+
+test('can commit after a merge', async t => {
+  const [repo] = await getBaseline()
+  repo.data.name = 'new name'
+  await repo.commit('simple change', testAuthor)
+
+  repo.checkout('branch', true)
+  repo.data.name = 'another name'
+  await repo.commit('minor change', testAuthor)
+
+  repo.checkout('main')
+  repo.merge('branch')
+
+  repo.data.name = 'something'
+  const newCommit = await repo.commit('new name', testAuthor)
+
+  const headRef = repo.head()
+  const refHash = repo.ref(headRef)
+
+  t.is(headRef, 'refs/heads/main', 'HEAD does not point to main branch')
+  t.is(refHash, newCommit, `master is not at expected commit`)
 })
