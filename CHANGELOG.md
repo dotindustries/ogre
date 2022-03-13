@@ -1,3 +1,21 @@
+# (Sun Mar 13 2022)
+
+#### 🚀 Enhancement
+
+- `@dotinc/ogre@0.2.0`
+  - Add visualization [#4](https://github.com/dotindustries/ogre/pull/4) ([@nadilas](https://github.com/nadilas))
+
+#### ⚠️ Pushed to `main`
+
+- `@dotinc/ogre@0.2.0`
+  - chore: remove old dev deps ([@nadilas](https://github.com/nadilas))
+
+#### Authors: 1
+
+- [@nadilas](https://github.com/nadilas)
+
+---
+
 # (Fri Mar 11 2022)
 
 #### 🐛 Bug Fix

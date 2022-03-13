@@ -1,3 +1,20 @@
+# v0.2.0 (Sun Mar 13 2022)
+
+#### 🚀 Enhancement
+
+- Add visualization [#4](https://github.com/dotindustries/ogre/pull/4) ([@nadilas](https://github.com/nadilas))
+- feat: add OgreGraph visualization ([@nadilas](https://github.com/nadilas))
+
+#### ⚠️ Pushed to `main`
+
+- chore: remove old dev deps ([@nadilas](https://github.com/nadilas))
+
+#### Authors: 1
+
+- [@nadilas](https://github.com/nadilas)
+
+---
+
 # v0.1.2 (Fri Mar 11 2022)
 
 #### 🐛 Bug Fix
