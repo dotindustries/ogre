@@ -9,6 +9,7 @@ keep the history around for a bit longer.
 
 - Commit
 - Branch
+- Tags
 - Checkout
 - Visualization via `@dotinc/ogre-react`
 - Merge
@@ -38,6 +39,7 @@ repo.data.name = 'a fancier name'
   await repo.commit('change name', 'author <author@test.com>')
   repo.checkout('main')
   repo.merge('add_details')
+  repo.tag('v1.0.0')
 
 // or b) discard change and go back
   // by using the branch name 
@@ -48,7 +50,6 @@ repo.data.name = 'a fancier name'
 
 ## TODO
 
-- [ ] Tags
 - [ ] Merge
     - [ ] recursive
     - [ ] octopus
