@@ -1,5 +1,18 @@
 # (Sun Mar 13 2022)
 
+#### ⚠️ Pushed to `main`
+
+- `@dotinc/ogre-react@0.2.1`
+  - npm release of ogre-react ([@nadilas](https://github.com/nadilas))
+
+#### Authors: 1
+
+- [@nadilas](https://github.com/nadilas)
+
+---
+
+# (Sun Mar 13 2022)
+
 #### 🚀 Enhancement
 
 - `@dotinc/ogre@0.2.0`
