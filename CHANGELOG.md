@@ -1,5 +1,23 @@
 # (Sun Mar 13 2022)
 
+#### 🚀 Enhancement
+
+- `@dotinc/ogre@0.3.0`
+  - Implement tags [#6](https://github.com/dotindustries/ogre/pull/6) ([@nadilas](https://github.com/nadilas))
+
+#### ⚠️ Pushed to `main`
+
+- `@dotinc/ogre-react@0.3.0`
+  - npm release of ogre-react ([@nadilas](https://github.com/nadilas))
+
+#### Authors: 1
+
+- [@nadilas](https://github.com/nadilas)
+
+---
+
+# (Sun Mar 13 2022)
+
 #### ⚠️ Pushed to `main`
 
 - `@dotinc/ogre-react@0.2.1`

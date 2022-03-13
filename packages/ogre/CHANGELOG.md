@@ -1,3 +1,20 @@
+# v0.3.0 (Sun Mar 13 2022)
+
+#### 🚀 Enhancement
+
+- Implement tags [#6](https://github.com/dotindustries/ogre/pull/6) ([@nadilas](https://github.com/nadilas))
+- feat: implement tags ([@nadilas](https://github.com/nadilas))
+
+#### 🐛 Bug Fix
+
+- doc: update README.md ([@nadilas](https://github.com/nadilas))
+
+#### Authors: 1
+
+- [@nadilas](https://github.com/nadilas)
+
+---
+
 # v0.2.0 (Sun Mar 13 2022)
 
 #### 🚀 Enhancement
