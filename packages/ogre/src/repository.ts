@@ -1,6 +1,6 @@
 import { Change, History, Reference } from './interfaces'
 import { calculateCommitHash, Commit } from './commit'
-import { validBranch } from './ref'
+import {validBranch, validRef} from './ref'
 import {digest} from './hash'
 
 const tagRefPathPrefix = 'refs/tags/'
@@ -38,6 +38,7 @@ export interface RepositoryObject<T> {
 
   branch(): string
 
+  tag(tag: string): string
 }
 
 export interface RespositoryObjectType {
@@ -312,9 +313,7 @@ export const Repository = function <T extends { [k: PropertyKey]: any }>(
       moveRef(REFS_HEAD_KEY, isRef && refKey !== undefined ? refKey : commit)
     }
   }
-  this.createBranch = (name) => {
-    validateBranchName(name)
-    const refName = brancheNameToRef(name)
+  const saveNewRef = (refKey: string, name: string) => {
     const headCommit = commitAtHead()
     if (!headCommit) {
       const headRef = this.head()
@@ -323,8 +322,29 @@ export const Repository = function <T extends { [k: PropertyKey]: any }>(
       }
       throw new Error(`fatal: not a valid object name: '${getLastItem(headRef)}'`)
     }
-    refs.set(refName, { name: name, value: headCommit.hash })
-    return refName
+    refs.set(refKey, { name: name, value: headCommit.hash })
+  }
+  this.createBranch = (name) => {
+    validateBranchName(name)
+    const branchRef = brancheNameToRef(name)
+    saveNewRef(branchRef, name)
+    return branchRef
+  }
+  this.tag = tag => {
+    try {
+      validateRef(tag)
+    } catch (e) {
+      throw new Error(`fatal: '${tag}' is not a valid tag name`)
+    }
+    const tagRef = tagToRef(tag)
+    try {
+      saveNewRef(tagRef, tag)
+    } catch (e) {
+      // because git has to make it weird and show a different error
+      //   unlike when creating a branch on a HEAD pointing to a ref which does not exist yet
+      throw new Error(`fatal: failed to resolve 'HEAD' as a valid ref.`)
+    }
+    return tagRef
   }
   const moveRef = (refName: string, value: string | Commit) => {
     let ref = refs.get(refName)
@@ -510,8 +530,18 @@ export const brancheNameToRef = (name: string) => {
   return `${headsRefPathPrefix}${name}`
 }
 
+export const tagToRef = (tag: string) => {
+  return `${tagRefPathPrefix}${tag}`
+}
+
 export const validateBranchName = (name: string) => {
   if (!validBranch(name)) {
+    throw new Error(`invalid ref name`)
+  }
+}
+
+export const validateRef = (name: string, oneLevel: boolean = true) => {
+  if (!validRef(name, oneLevel)) {
     throw new Error(`invalid ref name`)
   }
 }
