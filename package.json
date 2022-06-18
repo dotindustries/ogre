@@ -20,7 +20,7 @@
   },
   "license": "MIT",
   "devDependencies": {
-    "@auto-it/conventional-commits": "^10.34.1",
+    "@auto-it/conventional-commits": "^10.37.1",
     "@auto-it/microsoft-teams": "^10.37.1",
     "@auto-it/npm": "^10.34.1",
     "@auto-it/released": "^10.37.1",
