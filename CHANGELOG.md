@@ -1,3 +1,19 @@
+# (Sat Jun 18 2022)
+
+#### 🐛 Bug Fix
+
+- chore(analytics): add plausible ([@nadilas](https://github.com/nadilas))
+
+#### ⚠️ Pushed to `main`
+
+- Add reviews ([@nadilas](https://github.com/nadilas))
+
+#### Authors: 1
+
+- [@nadilas](https://github.com/nadilas)
+
+---
+
 # (Sun Mar 13 2022)
 
 #### 🚀 Enhancement
