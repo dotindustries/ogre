@@ -29,7 +29,7 @@
   "author": "János Veres @nadilas",
   "license": "MIT",
   "dependencies": {
-    "tslib": "^2.3.1"
+    "tslib": "^2.4.1"
   },
   "devDependencies": {
     "@ava/typescript": "^3.0.1",
