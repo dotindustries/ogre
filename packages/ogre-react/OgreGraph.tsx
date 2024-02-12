@@ -1,29 +1,27 @@
-import React, {useEffect, useState} from 'react'
-import {Gitgraph} from '@gitgraph/react'
-import {RepositoryObject} from '@dotinc/ogre'
-import {formatGit2Json} from './git2json'
+import React, { useEffect, useState } from "react";
+
+import { formatGit2Json, RepositoryObject } from "@dotinc/ogre";
+import { Gitgraph } from "@gitgraph/react";
 
 export interface OgreGraphProps {
-  repository: RepositoryObject<any>
+  repository: RepositoryObject<any>;
 }
 
-export const OgreGraph: React.FC<OgreGraphProps> = ({repository}) => {
-  const [graphData, setGraphData] = useState<any[] | undefined>(undefined)
+export const OgreGraph: React.FC<OgreGraphProps> = ({ repository }) => {
+  const [graphData, setGraphData] = useState<any[] | undefined>(undefined);
 
   useEffect(() => {
     if (!graphData) {
-      const history = repository.getHistory()
-      setGraphData(formatGit2Json(history))
+      const history = repository.getHistory();
+      setGraphData(formatGit2Json(history));
     }
-  }, [repository])
+  }, [repository]);
 
-  return !graphData
-    ? null
-    : (
-      <Gitgraph>
-        {(gitgraph) => {
-          gitgraph.import(graphData)
-        }}
-      </Gitgraph>
-    )
-}
+  return !graphData ? null : (
+    <Gitgraph>
+      {(gitgraph) => {
+        gitgraph.import(graphData);
+      }}
+    </Gitgraph>
+  );
+};

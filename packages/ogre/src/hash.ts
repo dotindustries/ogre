@@ -21,53 +21,63 @@
  *
  * @returns a promise that resolves to a string with hexadecimal content.
  */
-export function digest (obj: any, algorithm = 'SHA-256', isBrowser = false): Promise<string> { // eslint-disable-line
-  const algorithms = ['SHA-1', 'SHA-256', 'SHA-384', 'SHA-512']
+export function digest(
+  obj: any,
+  algorithm = "SHA-256",
+  isBrowser = false
+): Promise<string> {
+  // eslint-disable-line
+  const algorithms = ["SHA-1", "SHA-256", "SHA-384", "SHA-512"];
   if (!algorithms.includes(algorithm)) {
-    throw RangeError(`Valid hash algorithm values are any of ${JSON.stringify(algorithms)}`)
+    throw RangeError(
+      `Valid hash algorithm values are any of ${JSON.stringify(algorithms)}`
+    );
   }
   return (async function (obj, algorithm) {
-    const encoder = new TextEncoder()
-    const hashInput = encoder.encode(hashable(obj)).buffer
-    let digest = ''
+    const encoder = new TextEncoder();
+    const hashInput = encoder.encode(hashable(obj)).buffer;
+    let digest = "";
 
     if (isBrowser) {
-      const buf = await crypto.subtle.digest(algorithm, hashInput)
-      const h = '0123456789abcdef';
-      (new Uint8Array(buf)).forEach((v) => {
-        digest += h[v >> 4] + h[v & 15]
-      })
+      const buf = await crypto.subtle.digest(algorithm, hashInput);
+      const h = "0123456789abcdef";
+      new Uint8Array(buf).forEach((v) => {
+        digest += h[v >> 4] + h[v & 15];
+      });
     } else {
-      const nodeAlg = algorithm.toLowerCase().replace('-', '')
-      digest = require('crypto').createHash(nodeAlg).update(Buffer.from(hashInput)).digest('hex') // eslint-disable-line
+      const nodeAlg = algorithm.toLowerCase().replace("-", "");
+      digest = require("crypto")
+        .createHash(nodeAlg)
+        .update(Buffer.from(hashInput))
+        .digest("hex"); // eslint-disable-line
     }
     /* eslint-enable no-lone-blocks */
-    return digest
-  })(obj, algorithm)
+    return digest;
+  })(obj, algorithm);
 }
 
-function isObject (val: any): boolean {
-  return (val != null) && (typeof val === 'object') && !(Array.isArray(val))
+function isObject(val: any): boolean {
+  return val != null && typeof val === "object" && !Array.isArray(val);
 }
 
-function objectToArraySortedByKey (obj: any): any {
+function objectToArraySortedByKey(obj: any): any {
   if (!isObject(obj) && !Array.isArray(obj)) {
-    return obj
+    return obj;
   }
   if (Array.isArray(obj)) {
     return obj.map((item) => {
       if (Array.isArray(item) || isObject(item)) {
-        return objectToArraySortedByKey(item)
+        return objectToArraySortedByKey(item);
       }
-      return item
-    })
+      return item;
+    });
   }
   // if it is an object convert to array and sort
   return Object.keys(obj) // eslint-disable-line
     .sort()
     .map((key) => {
-      return [key, objectToArraySortedByKey(obj[key])]
-    })
+      return [key, objectToArraySortedByKey(obj[key])];
+    });
 }
 
 /**
@@ -78,5 +88,5 @@ function objectToArraySortedByKey (obj: any): any {
  * @returns {string} a JSON stringify of the created sorted array
  */
 const hashable = (obj: object) => {
-  return JSON.stringify(objectToArraySortedByKey(obj))
-}
+  return JSON.stringify(objectToArraySortedByKey(obj));
+};
