@@ -1,5 +1,5 @@
-import { Change } from "./interfaces";
 import { digest } from "./hash";
+import { Operation } from 'fast-json-patch';
 
 export interface Commit {
   // The hash of the commit
@@ -19,25 +19,17 @@ export interface Commit {
   parent: string | undefined;
 
   // The diff of this commit from the parent
-  changes: Change[];
+  changes: Operation[]
 
   // Commit timestamp with timezone
   timestamp: Date;
-
-  // The version number to the corresponding changelog entry (not zero-based index)
-  // Therefore it can be used as an index, when accessing the changelog to
-  // retrieve the relevant changes e.g.:
-  // ```
-  // const changes = changeLog.slice(commit.from, commit.to)
-  // ```
-  to: number;
 }
 
 export interface CommitHashContent {
   message: string;
   author: string;
   parentRef: string | undefined;
-  changes: Change[];
+  changes: Operation[];
   timestamp: Date;
 }
 

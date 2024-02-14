@@ -1,11 +1,12 @@
-import test from "ava";
+import test from 'ava';
+
 import {
   addOneStep,
   getBaseline,
   sumChanges,
   testAuthor,
   updateHeaderData,
-} from "./test.utils";
+} from './test.utils';
 
 test("baseline with 1 commit and zero changelog entries", async (t) => {
   const [repo] = await getBaseline();
@@ -98,7 +99,7 @@ test("array push double-change, 6 changes, 3 commits", async (t) => {
   await repo.commit("first step", testAuthor);
 
   const history = repo.getHistory();
-  t.is(sumChanges(history.commits), 6, "incorrect # of changelog entries");
+  t.is(sumChanges(history.commits), 4, "incorrect # of changelog entries");
   t.is(history.commits.length, 2, "incorrect # of commits");
   t.is(
     history.commits[0].changes.length,
@@ -107,7 +108,7 @@ test("array push double-change, 6 changes, 3 commits", async (t) => {
   );
   t.is(
     history.commits[1].changes.length,
-    3,
+    1,
     "#incorrect # of changes in commit#2"
   );
 });
@@ -149,7 +150,14 @@ test("commit --amend changes hash on content change", async (t) => {
   t.not(changedHash, commitToAmend, "hash should have changed");
   const history = repo.getHistory();
   t.is(history.commits.length, 1, "wrong # of commits");
-  t.is(sumChanges(history.commits), 2, "wrong # of changes");
+  // @ts-ignore
+  t.is(
+    sumChanges(history.commits),
+    2,
+    `wrong # of changes: ${JSON.stringify(
+      history.commits.flatMap((c) => c.changes)
+    )}`
+  );
   t.is(repo.head(), "refs/heads/main", "HEAD is not pointing to main");
   t.is(repo.branch(), "main", "we are on the wrong branch");
   t.is(
@@ -160,10 +168,13 @@ test("commit --amend changes hash on content change", async (t) => {
 });
 
 test("commit --amend changes hash on message change", async (t) => {
-  const [repo] = await getBaseline();
-  repo.data.name = "new name";
+  const [repo, data] = await getBaseline();
+  data.name = "new name";
   const commitToAmend = await repo.commit("name change", testAuthor);
+
+  // data.name = "another name";
   const changedHash = await repo.commit("initial setup", testAuthor, true);
+
   t.not(changedHash, commitToAmend, "hash should have changed");
   const history = repo.getHistory();
   t.is(history.commits.length, 1, "wrong # of commits");
@@ -182,8 +193,10 @@ test("commit at detached HEAD does not affect main, but moves head", async (t) =
   repo.data.name = "new name";
   const v1 = repo.data;
   const commit = await repo.commit("name change", testAuthor);
+
   repo.data.description = "new fancy description";
   const last = await repo.commit("desc change", testAuthor);
+
   repo.checkout(commit);
   t.is(repo.head(), commit, "HEAD did not move to commit");
   t.is(repo.branch(), "HEAD", "repo is not in detached state");

@@ -21,7 +21,7 @@ export async function getBaseline(): Promise<
 > {
   const co = new ComplexObject();
   const repo = new Repository(co, {});
-  return [repo, repo.data];
+  return [repo, co];
 }
 
 export function updateHeaderData(wrapped: ComplexObject) {
@@ -40,7 +40,7 @@ export function addOneStep(wrapped: ComplexObject) {
   wrapped.nested.push(pe);
   wrapped.nested[0].name = "new name";
 
-  return 3; // change entries
+  return 1; // change entries
 }
 
 export function sumChanges(commits: Commit[] | undefined) {
