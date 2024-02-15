@@ -1,11 +1,8 @@
 import {observe, unobserve, compare, applyReducer, deepClone, generate, Observer, Operation} from 'fast-json-patch';
 import {calculateCommitHash, Commit} from "./commit";
-import {digest} from "./hash";
 import {History, Reference} from "./interfaces";
 import {validBranch, validRef} from "./ref";
-import {revertJSONPatch} from "./revert";
-import {compressSync, decompressSync, gunzipSync, gzipSync, strFromU8, strToU8} from "fflate";
-import {sizeInMegabytes} from "./size";
+import {compressSync, decompressSync, strFromU8, strToU8} from "fflate";
 
 const tagRefPathPrefix = "refs/tags/";
 const headsRefPathPrefix = "refs/heads/";
@@ -81,40 +78,14 @@ export class Repository<T extends { [k: PropertyKey]: any }> implements Reposito
     private readonly commits: Commit[]
 
     private moveTo(commit: Commit) {
-        // pull all changes from root
-        const changelog = traverseAndCollectChangelog(commit, this.commits);
-
-        // take difference between head and commit
-        const delta = compare(this.original, this.data)
-        console.log('delta to original object from HEAD', delta)
-        // reset object
-        const resetPatch = revertJSONPatch(this.data, delta)
-        console.log('reset patch created', resetPatch)
+        const targetTree = JSON.parse(strFromU8(decompressSync(Buffer.from(commit.tree, 'base64'))))
+        const patchToTarget = compare(this.data, targetTree)
+        if (!patchToTarget || patchToTarget.length < 1) {
+            return
+        }
         unobserve(this.data, this.observer)
-        // apply changes to object
-        resetPatch.reduce(applyReducer, this.data)
-        // process new changelog
-        changelog.reduce(applyReducer, this.data)
-        // start watching
+        patchToTarget.reduce(applyReducer, this.data)
         this.observer = observe(this.data)
-
-        // const tree = commit.tree
-        // const treeU8 = strToU8(tree)
-        // const decompressed = decompressSync(treeU8)
-        // const jsonStr = strFromU8(decompressed)
-        // const targetTree = JSON.parse(jsonStr)
-        // console.log({
-        //     tree,
-        //     treeU8,
-        //     decompressed,
-        //     jsonStr,
-        //     targetTree
-        // })
-        // //const targetTree = JSON.parse(strFromU8(decompressSync(strToU8(commit.tree))))
-        // const patchToTarget = compare(this.data, targetTree)
-        // unobserve(this.data, this.observer)
-        // patchToTarget.reduce(applyReducer, this.data)
-        // this.observer = observe(this.data)
     }
 
     /**
@@ -179,8 +150,8 @@ export class Repository<T extends { [k: PropertyKey]: any }> implements Reposito
             parentRef: parent?.hash,
             timestamp,
         });
-        const treeHash = strFromU8(compressSync(strToU8(JSON.stringify(this.data))));
-
+        
+        const treeHash = Buffer.from(compressSync(strToU8(JSON.stringify(this.data)), { level: 6, mem: 8 })).toString('base64');
         const commit = {
             hash: sha,
             message,
