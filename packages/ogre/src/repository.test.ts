@@ -87,3 +87,26 @@ test("history contains HEAD ref", async (t) => {
   t.is(headRef!.name, "HEAD");
   t.is(headRef!.value, "ref: refs/heads/main");
 });
+
+test("diff is ok", async (t) => {
+  const [repo, obj] = await getBaseline();
+
+  updateHeaderData(obj);
+  const zeroth = await repo.commit("header data", testAuthor);
+
+  let changeEntries = addOneNested(obj);
+  const first = await repo.commit("first nested", testAuthor);
+
+  t.is(repo.ref("refs/heads/main"), first, "main is pointing at wrong commit");
+
+  changeEntries += addOneNested(obj);
+
+  const second = await repo.commit("second nested", testAuthor);
+
+  const diff = repo.diff(zeroth);
+  t.is(
+    diff.length,
+    changeEntries,
+    `invalid # of change entries: ${JSON.stringify(diff)}`
+  );
+});

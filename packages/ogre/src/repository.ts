@@ -29,6 +29,14 @@ export interface RepositoryObject<T extends { [k: string]: any }> {
 
   getHistory(): History<T>;
 
+  /**
+   * Returns the diff between the current HEAD and provided shaish expression
+   *
+   * @param shaishFrom expression (e.g. refs (branches, tags), commitSha)
+   * @param shaishTo expression (e.g. refs (branches, tags), commitSha)
+   */
+  diff(shaishFrom: string, shaishTo?: string): Operation[];
+
   // It returns the reference where we are currently at
   head(): string;
 
@@ -45,16 +53,12 @@ export interface RepositoryObject<T extends { [k: string]: any }> {
 
   merge(source: string | RepositoryObject<T> | History<T>): string;
 
+  /**
+   * Branch returns the current branch name
+   */
   branch(): string;
 
   tag(tag: string): string;
-}
-
-export interface RespositoryObjectType {
-  new <T extends { [k: string]: any }>(
-    obj: T,
-    options: RepositoryOptions<T>
-  ): RepositoryObject<T>;
 }
 
 /**
@@ -83,15 +87,14 @@ export class Repository<T extends { [k: PropertyKey]: any }>
   }
 
   private readonly original: T;
+
   data: T;
   private observer: Observer<T>;
   private readonly refs: Map<string, Reference>;
   private readonly commits: Commit[];
 
   private moveTo(commit: Commit) {
-    const targetTree = JSON.parse(
-      strFromU8(decompressSync(Buffer.from(commit.tree, "base64")))
-    );
+    const targetTree = treeToObject(commit.tree);
     const patchToTarget = compare(this.data, targetTree);
     if (!patchToTarget || patchToTarget.length < 1) {
       return;
@@ -101,9 +104,6 @@ export class Repository<T extends { [k: PropertyKey]: any }>
     this.observer = observe(this.data);
   }
 
-  /**
-   * Branch returns the current branch name
-   */
   branch(): string {
     const currentHeadRef = this.refs.get(REFS_HEAD_KEY);
     if (!currentHeadRef) {
@@ -116,6 +116,20 @@ export class Repository<T extends { [k: PropertyKey]: any }>
     }
 
     return REFS_HEAD_KEY; // detached state
+  }
+
+  diff(shaishFrom: string, shaishTo?: string): Operation[] {
+    const [cFrom] = shaishToCommit(shaishFrom, this.refs, this.commits);
+    let target: T;
+    if (shaishTo) {
+      const [cTo] = shaishToCommit(shaishTo, this.refs, this.commits);
+      target = treeToObject(cTo.tree);
+    } else {
+      target = this.data;
+    }
+    const targetTree = treeToObject(cFrom.tree);
+
+    return compare(targetTree, target);
   }
 
   checkout(shaish: string, createBranch?: boolean): void {
@@ -390,6 +404,10 @@ export class Repository<T extends { [k: PropertyKey]: any }>
     return tagRef;
   }
 }
+
+const treeToObject = <T = any>(tree: string): T => {
+  return JSON.parse(strFromU8(decompressSync(Buffer.from(tree, "base64"))));
+};
 
 const getLastItem = (thePath: string) =>
   thePath.substring(thePath.lastIndexOf("/") + 1);
