@@ -1,5 +1,5 @@
 import { digest } from "./hash";
-import { Operation } from 'fast-json-patch';
+import { Operation } from "fast-json-patch";
 
 export interface Commit {
   // The hash of the commit
@@ -19,7 +19,7 @@ export interface Commit {
   parent: string | undefined;
 
   // The diff of this commit from the parent
-  changes: Operation[]
+  changes: Operation[];
 
   // Commit timestamp with timezone
   timestamp: Date;

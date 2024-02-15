@@ -1,4 +1,4 @@
-import test from 'ava';
+import test from "ava";
 
 import {
   addOneStep,
@@ -6,7 +6,7 @@ import {
   sumChanges,
   testAuthor,
   updateHeaderData,
-} from './test.utils';
+} from "./test.utils";
 
 test("baseline with 1 commit and zero changelog entries", async (t) => {
   const [repo] = await getBaseline();

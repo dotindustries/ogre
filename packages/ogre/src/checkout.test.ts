@@ -25,7 +25,11 @@ test("checkout prev commit", async (t) => {
   t.is(history.commits.length, 1, "incorrect # of commits");
   t.is(head, headerDataHash, `points to wrong commit`);
   t.is(repo.branch(), "HEAD", "repo is not in detached state");
-  t.deepEqual(obj.nested.length, 0, `has a nested object when it shouldn't: ${JSON.stringify(obj)}`)
+  t.deepEqual(
+    obj.nested.length,
+    0,
+    `has a nested object when it shouldn't: ${JSON.stringify(obj)}`
+  );
 });
 
 test("checkout new branch with simple name", async (t) => {
