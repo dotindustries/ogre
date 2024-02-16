@@ -1,11 +1,13 @@
 {
 	"name": "@dotinc/ogre-cli",
-	"version": "0.0.0",
+	"version": "0.0.1",
+	"author": "János Veres @nadilas",
 	"license": "MIT",
 	"bin": "dist/cli.js",
 	"type": "module",
+	"main": "dist/cli.js",
 	"engines": {
-		"node": ">=16"
+		"node": ">=18"
 	},
 	"scripts": {
 		"build": "tsc",
@@ -47,13 +49,6 @@
 		"nodeArguments": [
 			"--loader=ts-node/esm"
 		]
-	},
-	"xo": {
-		"extends": "xo-react",
-		"prettier": true,
-		"rules": {
-			"react/prop-types": "off"
-		}
 	},
 	"prettier": "@vdemedes/prettier-config"
 }
