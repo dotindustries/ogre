@@ -31,7 +31,7 @@ const findRefs = (commit: Commit, refs: Map<string, Reference>) => {
  * in the Repository history. The json representation is returned in `git2json` format based on:
  * https://github.com/fabien0102/git2json/blob/e067166d2468018b6f3982a8fb44a2e54110ce02/src/git2json.js#L5-L22
  */
-export const formatGit2Json = (history: History) => {
+export const formatGit2Json = <T = any>(history: History<T>) => {
   const { commits, refs } = history;
   return commits.reverse().map((c) => {
     const [name, email] = cleanAuthor(c.author);

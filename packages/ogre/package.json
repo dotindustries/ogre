@@ -6,6 +6,7 @@
   },
   "version": "0.3.0",
   "description": "Git-like repository for in-memory object versioning",
+  "private": false,
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "scripts": {
