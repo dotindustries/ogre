@@ -7,13 +7,8 @@ export interface Reference {
   value: string;
 }
 
-export interface Change {
-  path: any[];
-  newValue: any | undefined;
-  oldValue: any | undefined;
-}
-
-export interface History {
+export interface History<T extends { [k: string]: any }> {
+  original: T;
   refs: Map<string, Reference>;
   commits: Commit[];
 }

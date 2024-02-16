@@ -47,12 +47,15 @@ test("reconstruct with 2 commits", async (t) => {
   let changeEntries = updateHeaderData(wrapped);
   await repo.commit("header data", testAuthor);
 
-  changeEntries += addOneNested(wrapped);
+  addOneNested(wrapped);
+  changeEntries++;
   const first = await repo.commit("first nested", testAuthor);
 
   t.is(repo.ref("refs/heads/main"), first, "main is pointing at wrong commit");
 
-  changeEntries += addOneNested(wrapped);
+  addOneNested(wrapped);
+  changeEntries++;
+
   const second = await repo.commit("second nested", testAuthor);
 
   const history = repo.getHistory();
