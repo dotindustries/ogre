@@ -1,5 +1,5 @@
-import { Change } from './interfaces'
-import { digest } from './hash'
+import { Change } from "./interfaces";
+import { digest } from "./hash";
 
 export interface Commit {
   // The hash of the commit
@@ -9,20 +9,20 @@ export interface Commit {
   // - author
   // - author commit timestamp with timezone
   // - commit message
-  hash: string
-  tree: string
+  hash: string;
+  tree: string;
 
-  message: string | undefined
-  author: string
+  message: string | undefined;
+  author: string;
 
   // The hash of the parent commit
-  parent: string | undefined
+  parent: string | undefined;
 
   // The diff of this commit from the parent
-  changes: Change[]
+  changes: Change[];
 
   // Commit timestamp with timezone
-  timestamp: Date
+  timestamp: Date;
 
   // The version number to the corresponding changelog entry (not zero-based index)
   // Therefore it can be used as an index, when accessing the changelog to
@@ -34,13 +34,13 @@ export interface Commit {
 }
 
 export interface CommitHashContent {
-  message: string
-  author: string
-  parentRef: string | undefined
-  changes: Change[]
-  timestamp: Date
+  message: string;
+  author: string;
+  parentRef: string | undefined;
+  changes: Change[];
+  timestamp: Date;
 }
 
 export function calculateCommitHash(content: CommitHashContent) {
-  return digest(content)
+  return digest(content);
 }

@@ -1,2 +1,2 @@
-export * from './OgreGraph'
-export {formatGit2Json} from './git2json'
+export * from "./OgreGraph";
+export { formatGit2Json } from "@dotinc/ogre";

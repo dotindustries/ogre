@@ -1,19 +1,19 @@
-import { Commit } from './commit'
+import { Commit } from "./commit";
 
 export interface Reference {
-  name: string
+  name: string;
   // A reference can point to a commit via its sha256
   // or it can point to a reference
-  value: string
+  value: string;
 }
 
 export interface Change {
-  path: any[]
-  newValue: any | undefined
-  oldValue: any | undefined
+  path: any[];
+  newValue: any | undefined;
+  oldValue: any | undefined;
 }
 
 export interface History {
-  refs: Map<string, Reference>
-  commits: Commit[]
+  refs: Map<string, Reference>;
+  commits: Commit[];
 }
