@@ -11,7 +11,7 @@
   "dependencies": {
     "@dotinc/ogre": "^0.3.0",
     "@dotinc/ogre-react": "^0.3.0",
-    "next": "12.1.0",
+    "next": "12.3.4",
     "next-plausible": "^3.12.0",
     "next-transpile-modules": "^9.0.0",
     "polished": "^4.3.1",
