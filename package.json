@@ -16,7 +16,7 @@
     "lint": "turbo run lint",
     "test": "turbo run test",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "release": "auto shipit -vv"
+    "release": "auto shipit"
   },
   "license": "MIT",
   "devDependencies": {
