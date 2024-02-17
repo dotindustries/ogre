@@ -22,7 +22,8 @@
 		"@gitgraph/core": "1.5.0",
 		"chalk": "^5.3.0",
 		"color-convert": "^2.0.1",
-		"lodash": "^4.17.21"
+		"lodash": "^4.17.21",
+		"@dotinc/ogre": "*"
 	},
 	"devDependencies": {
 		"@sindresorhus/tsconfig": "^3.0.1",
