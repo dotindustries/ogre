@@ -1,25 +1,44 @@
 name: Release
 
-on: [push]
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    types: [ opened, synchronize ]
 
 jobs:
   release:
+    timeout-minutes: 15
     runs-on: ubuntu-latest
     if: "!contains(github.event.head_commit.message, 'ci skip') && !contains(github.event.head_commit.message, 'skip ci')"
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Prepare repository
         run: git fetch --unshallow --tags
 
-      - name: Use Node.js 12.x
-        uses: actions/setup-node@v1
+      - name: Cache turbo build setup
+        uses: actions/cache@v3
         with:
-          node-version: 17.x
+          path: .turbo
+          key: ${{ runner.os }}-turbo-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-
 
-      - run: npm ci
-      - run: npm run test
-      - run: npm run build
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Run tests
+        run: npm run test
 
       - name: Create Release
         env:
@@ -27,4 +46,4 @@ jobs:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           MICROSOFT_TEAMS_WEBHOOK_URL: ${{ secrets.MICROSOFT_TEAMS_WEBHOOK_URL }}
         run: |
-          npm run release
+          npx auto shipit
