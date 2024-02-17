@@ -9,7 +9,7 @@
     "url": "https://github.com/dotindustries/ogre.git"
   },
   "dependencies": {
-    "@dotinc/ogre": "^0.3.0",
+    "@dotinc/ogre": "*",
     "@gitgraph/react": "^1.6.0"
   },
   "devDependencies": {
