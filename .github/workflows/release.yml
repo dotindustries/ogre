@@ -46,4 +46,4 @@ jobs:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           MICROSOFT_TEAMS_WEBHOOK_URL: ${{ secrets.MICROSOFT_TEAMS_WEBHOOK_URL }}
         run: |
-          npx auto shipit
+          npm run release
