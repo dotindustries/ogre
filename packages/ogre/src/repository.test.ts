@@ -24,7 +24,7 @@ test("reconstruction", async (t) => {
   t.is(
     repo.ref("refs/heads/main"),
     firstStep,
-    "main is pointing at wrong commit"
+    "main is pointing at wrong commit",
   );
   t.is(history.commits.length, 2, "incorrect # of commits");
 
@@ -37,7 +37,7 @@ test("reconstruction", async (t) => {
   t.is(
     sumChanges(history2.commits),
     changeEntries,
-    "incorrect # of changelog entries"
+    "incorrect # of changelog entries",
   );
 });
 
@@ -72,7 +72,7 @@ test("reconstruct with 2 commits", async (t) => {
   t.is(
     sumChanges(history2.commits),
     changeEntries,
-    "incorrect # of changelog entries"
+    "incorrect # of changelog entries",
   );
 });
 
@@ -107,6 +107,10 @@ test("diff is ok", async (t) => {
   t.is(
     diff.length,
     changeEntries,
-    `invalid # of change entries: ${JSON.stringify(diff)}`
+    `invalid # of change entries: ${JSON.stringify(diff)}`,
   );
 });
+
+// test("reset hard", async (t) => {
+//   // TODO: test reset feature
+// });

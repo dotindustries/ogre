@@ -59,6 +59,13 @@ export interface RepositoryObject<T extends { [k: string]: any }> {
   branch(): string;
 
   tag(tag: string): string;
+
+  /**
+   * Moves the HEAD and the branch to a specific shaish (commit or tag)
+   * @param mode hard - discard changes
+   * @param shaish
+   */
+  reset(mode?: "soft" | "hard", shaish?: string): void;
 }
 
 /**
@@ -89,7 +96,9 @@ export class Repository<T extends { [k: PropertyKey]: any }>
   private readonly original: T;
 
   data: T;
+
   private observer: Observer<T>;
+
   private readonly refs: Map<string, Reference>;
   private readonly commits: Commit[];
 
@@ -102,6 +111,32 @@ export class Repository<T extends { [k: PropertyKey]: any }>
     unobserve(this.data, this.observer);
     patchToTarget.reduce(applyReducer, this.data);
     this.observer = observe(this.data);
+  }
+
+  reset(
+    mode: "soft" | "hard" | undefined = "hard",
+    shaish: string | undefined = REFS_HEAD_KEY,
+  ): void {
+    if (mode === "hard") {
+      unobserve(this.data, this.observer);
+    }
+
+    const [commit] = shaishToCommit(shaish, this.refs, this.commits);
+    this.moveTo(commit);
+
+    const refs = refsAtCommit(this.refs, commit);
+    // reset only moves heads and not tags
+    const moveableRefs = refs.filter((r) =>
+      r.name.startsWith(headsRefPathPrefix),
+    );
+
+    for (const ref of moveableRefs) {
+      this.moveRef(ref.name, commit);
+    }
+
+    if (mode === "hard") {
+      this.observer = observe(this.data);
+    }
   }
 
   branch(): string {
@@ -145,12 +180,12 @@ export class Repository<T extends { [k: PropertyKey]: any }>
       const [commit, isRef, refKey] = shaishToCommit(
         shaish,
         this.refs,
-        this.commits
+        this.commits,
       );
       this.moveTo(commit);
       this.moveRef(
         REFS_HEAD_KEY,
-        isRef && refKey !== undefined ? refKey : commit
+        isRef && refKey !== undefined ? refKey : commit,
       );
     }
   }
@@ -158,7 +193,7 @@ export class Repository<T extends { [k: PropertyKey]: any }>
   async commit(
     message: string,
     author: string,
-    amend?: boolean
+    amend?: boolean,
   ): Promise<string> {
     let parent = this.commitAtHead();
     if (amend && !parent) {
@@ -196,7 +231,7 @@ export class Repository<T extends { [k: PropertyKey]: any }>
     });
 
     const treeHash = Buffer.from(
-      compressSync(strToU8(JSON.stringify(this.data)), { level: 6, mem: 8 })
+      compressSync(strToU8(JSON.stringify(this.data)), { level: 6, mem: 8 }),
     ).toString("base64");
     const commit = {
       hash: sha,
@@ -307,7 +342,7 @@ export class Repository<T extends { [k: PropertyKey]: any }>
       throw new Error(
         `fatal: source type (${
           source instanceof Repository ? "Repository" : "History"
-        }) not implemented`
+        }) not implemented`,
       );
     }
 
@@ -374,7 +409,7 @@ export class Repository<T extends { [k: PropertyKey]: any }>
         throw new Error(`unreachable: HEAD not present`);
       }
       throw new Error(
-        `fatal: not a valid object name: '${getLastItem(headRef)}'`
+        `fatal: not a valid object name: '${getLastItem(headRef)}'`,
       );
     }
     this.refs.set(refKey, { name: name, value: headCommit.hash });
@@ -430,7 +465,7 @@ const traverseAndCollectChangelog = (commit: Commit, commitsList: Commit[]) => {
 const mapPath = (
   from: Commit,
   to: Commit,
-  commits: Commit[]
+  commits: Commit[],
 ): [isAncestor: boolean] => {
   let c: Commit | undefined = to;
   while (c !== undefined) {
@@ -451,7 +486,7 @@ const mapPath = (
 const commitAtRefIn = (
   ref: string,
   references: Map<string, Reference>,
-  commitsList: Commit[]
+  commitsList: Commit[],
 ) => {
   const reference = references.get(ref);
   if (!reference) {
@@ -477,6 +512,16 @@ const commitAtRefIn = (
   return undefined;
 };
 
+const refsAtCommit = (references: Map<string, Reference>, commit: Commit) => {
+  const list: Array<Reference> = [];
+  for (const [name, ref] of references.entries()) {
+    if (ref.value === commit.hash) {
+      list.push(ref);
+    }
+  }
+  return list;
+};
+
 /**
  * Accepts a shaish expression (e.g. refs (branches, tags), commitSha) and returns
  * - a commit of type Commit
@@ -486,7 +531,7 @@ const commitAtRefIn = (
 const shaishToCommit = (
   shaish: string,
   references: Map<string, Reference>,
-  commitsList: Commit[]
+  commitsList: Commit[],
 ): [commit: Commit, isRef: boolean, ref: string | undefined] => {
   let sha = shaish;
   let isRef = false;
@@ -557,7 +602,7 @@ export const validateRef = (name: string, oneLevel: boolean = true) => {
  * @param repository
  */
 export const printChangeLog = <T extends { [k: string]: any }>(
-  repository: RepositoryObject<T>
+  repository: RepositoryObject<T>,
 ) => {
   console.log("----------------------------------------------------------");
   console.log(`Changelog at ${repository.head()}`);
