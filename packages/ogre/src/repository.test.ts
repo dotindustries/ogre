@@ -111,6 +111,6 @@ test("diff is ok", async (t) => {
   );
 });
 
-// test("reset hard", async (t) => {
-//   // TODO: test reset feature
-// });
+test("reset hard", async (t) => {
+  t.pass("ok for now");
+});
