@@ -20,11 +20,11 @@
   },
   "license": "MIT",
   "devDependencies": {
-    "@auto-it/conventional-commits": "^10.34.1",
-    "@auto-it/microsoft-teams": "^10.37.1",
-    "@auto-it/npm": "^10.34.1",
-    "@auto-it/released": "^10.37.1",
-    "auto": "^10.34.1",
+    "@auto-it/conventional-commits": "^11.0.7",
+    "@auto-it/microsoft-teams": "^11.0.7",
+    "@auto-it/npm": "^11.0.7",
+    "@auto-it/released": "^11.0.7",
+    "auto": "^11.0.7",
     "dotenv-cli": "^7.3.0",
     "prettier": "^3.2.5",
     "turbo": "latest"

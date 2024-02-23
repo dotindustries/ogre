@@ -1,4 +1,4 @@
-import test from "ava";
+import { test } from "tap";
 import {
   addOneStep,
   ComplexObject,
@@ -21,14 +21,14 @@ test("checkout prev commit", async (t) => {
   repo.checkout(headerDataHash);
   const head = repo.head();
   const history = repo.getHistory();
-  t.is(sumChanges(history.commits), 3, `incorrect # of changelog entries`);
-  t.is(history.commits.length, 1, "incorrect # of commits");
-  t.is(head, headerDataHash, `points to wrong commit`);
-  t.is(repo.branch(), "HEAD", "repo is not in detached state");
-  t.deepEqual(
+  t.equal(sumChanges(history.commits), 3, `incorrect # of changelog entries`);
+  t.equal(history.commits.length, 1, "incorrect # of commits");
+  t.equal(head, headerDataHash, `points to wrong commit`);
+  t.equal(repo.branch(), "HEAD", "repo is not in detached state");
+  t.equal(
     obj.nested.length,
     0,
-    `has a nested object when it shouldn't: ${JSON.stringify(obj)}`
+    `has a nested object when it shouldn't: ${JSON.stringify(obj)}`,
   );
 });
 
@@ -39,7 +39,7 @@ test("checkout new branch with simple name", async (t) => {
 
   const ref = repo.createBranch("new_feature");
   repo.checkout("new_feature");
-  t.is(repo.head(), ref, "HEAD is not moved to target branch");
+  t.equal(repo.head(), ref, "HEAD is not moved to target branch");
 });
 
 test("checkout new branch with full ref name", async (t) => {
@@ -49,7 +49,7 @@ test("checkout new branch with full ref name", async (t) => {
 
   const ref = repo.createBranch("new_feature");
   repo.checkout(ref);
-  t.is(repo.head(), ref, "HEAD is not moved to target branch");
+  t.equal(repo.head(), ref, "HEAD is not moved to target branch");
 });
 
 test("checkout commit which has two refs pointing leaves HEAD detached", async (t) => {
@@ -59,14 +59,14 @@ test("checkout commit which has two refs pointing leaves HEAD detached", async (
 
   repo.createBranch("new_feature");
   repo.checkout(commit);
-  t.is(repo.ref("refs/heads/main"), commit, "main does not point to commit");
-  t.is(
+  t.equal(repo.ref("refs/heads/main"), commit, "main does not point to commit");
+  t.equal(
     repo.ref("refs/heads/new_feature"),
     commit,
-    "new_feature does not point to commit"
+    "new_feature does not point to commit",
   );
-  t.is(repo.branch(), "HEAD", "HEAD is not detached at commit");
-  t.is(repo.head(), commit, "HEAD is not pointing to commit");
+  t.equal(repo.branch(), "HEAD", "HEAD is not detached at commit");
+  t.equal(repo.head(), commit, "HEAD is not pointing to commit");
 });
 
 test("checkout new branch moves head to new branch", async (t) => {
@@ -76,19 +76,19 @@ test("checkout new branch moves head to new branch", async (t) => {
 
   const ref = repo.createBranch("new_feature");
   repo.checkout("new_feature");
-  t.is(repo.head(), ref, "HEAD is not moved to target branch");
+  t.equal(repo.head(), ref, "HEAD is not moved to target branch");
 });
 
 test("checkout and create new branch on empty main", async (t) => {
   const [repo] = await getBaseline();
 
   repo.checkout("new_feature", true);
-  t.is(
+  t.equal(
     repo.head(),
     "refs/heads/new_feature",
-    "HEAD should point to empty branch"
+    "HEAD should point to empty branch",
   );
-  t.is(repo.branch(), "HEAD", "branch still should be empty");
+  t.equal(repo.branch(), "HEAD", "branch still should be empty");
 });
 
 test("checkout and create new branch with at least 1 commit", async (t) => {
@@ -97,29 +97,32 @@ test("checkout and create new branch with at least 1 commit", async (t) => {
   const commit = await repo.commit("simple change", testAuthor);
 
   repo.checkout("new_feature", true);
-  t.is(
+  t.equal(
     repo.head(),
     "refs/heads/new_feature",
-    "HEAD should point to new branch"
+    "HEAD should point to new branch",
   );
-  t.is(
+  t.equal(
     repo.ref("refs/heads/new_feature"),
     commit,
-    "branch is not pointing to last HEAD commit"
+    "branch is not pointing to last HEAD commit",
   );
 });
 
 test("replacing default branch on empty master removes main", async (t) => {
-  const repo = new Repository(new ComplexObject(), {});
+  const cx: ComplexObject = {
+    nested: [],
+  };
+  const repo = new Repository(cx, {});
 
   // replacing default main branch by moving HEAD to new branch
   // is OK even on empty repo
   repo.checkout("new_feature", true);
   const history = repo.getHistory();
-  t.is(
+  t.equal(
     sumChanges(history?.commits),
     0,
-    "new branch w/ incorrect # of changelog entries"
+    "new branch w/ incorrect # of changelog entries",
   );
 
   repo.data.name = "name changed";
@@ -130,6 +133,6 @@ test("replacing default branch on empty master removes main", async (t) => {
     () => {
       repo.checkout("main");
     },
-    { message: `pathspec 'main' did not match any known refs` }
+    { message: `pathspec 'main' did not match any known refs` },
   );
 });

@@ -34,3 +34,4 @@ yarn-error.log*
 
 # jetbrains
 .idea
+packages/ogre/.tap

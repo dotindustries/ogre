@@ -2,24 +2,29 @@ import { v4 as uuid4 } from "uuid";
 import { Repository, RepositoryObject } from "./repository";
 import { Commit } from "./commit";
 
-export class NestedObject {
-  public name: string | undefined;
-  public uuid: string | undefined;
-}
+export type NestedObject = {
+  name?: string;
+  uuid?: string;
+};
 
-export class ComplexObject {
-  public uuid: string | undefined;
-  public name: string | undefined;
-  public description: string | undefined;
-  public nested: NestedObject[] = [];
-}
+export type ComplexObject = {
+  uuid?: string;
+  name?: string;
+  description?: string;
+  nested: NestedObject[];
+};
 
 export const testAuthor = "User name <name@domain.com>";
 
 export async function getBaseline(): Promise<
   [RepositoryObject<ComplexObject>, ComplexObject]
 > {
-  const co = new ComplexObject();
+  const co: ComplexObject = {
+    uuid: undefined,
+    name: undefined,
+    description: undefined,
+    nested: [],
+  };
   const repo = new Repository(co, {});
   return [repo, co];
 }
@@ -33,7 +38,7 @@ export function updateHeaderData(wrapped: ComplexObject) {
 }
 
 export function addOneStep(wrapped: ComplexObject) {
-  const pe = new NestedObject();
+  const pe: NestedObject = {};
   pe.uuid = uuid4();
   pe.name = "first name";
 
