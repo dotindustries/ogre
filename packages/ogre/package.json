@@ -11,21 +11,8 @@
   "types": "lib/index.d.ts",
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "test": "nyc --reporter=lcov ava",
-    "test.watch": "ava --watch",
+    "test": "nyc --reporter=lcov tap --coverage-report=none --allow-incomplete-coverage",
     "coverage:html": "nyc report --reporter=html"
-  },
-  "ava": {
-    "timeout": "60s",
-    "files": [
-      "./src/**/*.test.ts"
-    ],
-    "extensions": [
-      "ts"
-    ],
-    "require": [
-      "ts-node/register"
-    ]
   },
   "author": "János Veres @nadilas",
   "license": "MIT",
@@ -36,10 +23,9 @@
     "fflate": "^0.8.2"
   },
   "devDependencies": {
-    "@ava/typescript": "^3.0.1",
+    "tap": "^18.7.0",
     "@types/node": "^17.0.45",
     "@types/uuid": "^8.3.4",
-    "ava": "^4.3.3",
     "nyc": "^15.1.0",
     "ts-node": "^10.8.1",
     "typescript": "^4.7.4",

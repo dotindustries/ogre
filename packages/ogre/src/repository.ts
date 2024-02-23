@@ -91,6 +91,14 @@ export class Repository<T extends { [k: PropertyKey]: any }>
       ]);
 
     this.commits = options.history?.commits ?? [];
+
+    if (options.history) {
+      const commit = this.commitAtHead();
+      if (!commit) {
+        return;
+      }
+      this.moveTo(commit);
+    }
   }
 
   private readonly original: T;

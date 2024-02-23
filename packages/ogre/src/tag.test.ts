@@ -1,4 +1,4 @@
-import test from "ava";
+import { test } from "tap";
 import { getBaseline, testAuthor } from "./test.utils";
 
 test("cannot tag on an empty repo", async (t) => {
@@ -8,7 +8,7 @@ test("cannot tag on an empty repo", async (t) => {
     () => {
       repo.tag("v1.0.0");
     },
-    { message: `fatal: failed to resolve 'HEAD' as a valid ref.` }
+    { message: `fatal: failed to resolve 'HEAD' as a valid ref.` },
   );
 });
 
@@ -21,10 +21,10 @@ test("can create simple tag pointing to HEAD", async (t) => {
   const tagRef = repo.tag(tag);
 
   let expectedRefKey = `refs/tags/${tag}`;
-  t.is(tagRef, expectedRefKey);
-  t.is(repo.ref(tagRef), commit, "tag is not pointing to expected commit");
+  t.equal(tagRef, expectedRefKey);
+  t.equal(repo.ref(tagRef), commit, "tag is not pointing to expected commit");
   const { refs } = repo.getHistory();
-  t.true(refs.has(expectedRefKey), "reference was not present in history");
+  t.ok(refs.has(expectedRefKey), "reference was not present in history");
 });
 
 test("cannot create tag with whitespace", async (t) => {
@@ -37,6 +37,6 @@ test("cannot create tag with whitespace", async (t) => {
     () => {
       repo.tag(tag);
     },
-    { message: `fatal: '${tag}' is not a valid tag name` }
+    { message: `fatal: '${tag}' is not a valid tag name` },
   );
 });
