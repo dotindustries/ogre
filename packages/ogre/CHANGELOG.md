@@ -1,3 +1,58 @@
+# v0.4.0 (Fri Feb 23 2024)
+
+#### 🚀 Enhancement
+
+- feat: reset [#146](https://github.com/dotindustries/ogre/pull/146) ([@nadilas](https://github.com/nadilas))
+- feat: reset ([@nadilas](https://github.com/nadilas))
+- feat: diff operation [#132](https://github.com/dotindustries/ogre/pull/132) ([@nadilas](https://github.com/nadilas))
+- feat: diff operation ([@nadilas](https://github.com/nadilas))
+
+#### 🐛 Bug Fix
+
+- fix: restore from history [#148](https://github.com/dotindustries/ogre/pull/148) ([@nadilas](https://github.com/nadilas))
+- test: hard reset test ([@nadilas](https://github.com/nadilas))
+- test: migrate from ava to tap ([@nadilas](https://github.com/nadilas))
+- fix: restore from history ([@nadilas](https://github.com/nadilas))
+- test: base test [#147](https://github.com/dotindustries/ogre/pull/147) ([@nadilas](https://github.com/nadilas))
+- test: base test ([@nadilas](https://github.com/nadilas))
+- chore(deps-dev): bump @types/node from 17.0.38 to 17.0.45 ([@dependabot[bot]](https://github.com/dependabot[bot]))
+- chore(deps-dev): bump ava from 4.3.0 to 4.3.3 ([@dependabot[bot]](https://github.com/dependabot[bot]))
+- chore(deps): bump tslib from 2.3.1 to 2.6.2 ([@dependabot[bot]](https://github.com/dependabot[bot]))
+- chore: allow for cli publishing ([@nadilas](https://github.com/nadilas))
+- chore: add missing generic ([@nadilas](https://github.com/nadilas))
+- fix: array features by changing to json-patch RFC6902 [#131](https://github.com/dotindustries/ogre/pull/131) ([@nadilas](https://github.com/nadilas))
+- lint: format ([@nadilas](https://github.com/nadilas))
+- refactor: move to git commit logic ([@nadilas](https://github.com/nadilas))
+- fix: array features by changing to json-patch RFC6902 ([@nadilas](https://github.com/nadilas))
+- refactor: move formatgit2json to core lib [#130](https://github.com/dotindustries/ogre/pull/130) ([@nadilas](https://github.com/nadilas))
+- refactor: move formatgit2json to core lib ([@nadilas](https://github.com/nadilas))
+- chore(deps-dev): bump ava from 4.1.0 to 4.3.0 ([@dependabot[bot]](https://github.com/dependabot[bot]))
+- chore(deps-dev): bump typescript from 4.6.2 to 4.7.4 ([@dependabot[bot]](https://github.com/dependabot[bot]))
+- chore(deps-dev): bump ts-node from 10.7.0 to 10.8.1 ([@dependabot[bot]](https://github.com/dependabot[bot]))
+- chore(deps-dev): bump @types/node from 17.0.21 to 17.0.38 ([@dependabot[bot]](https://github.com/dependabot[bot]))
+
+#### 🔩 Dependency Updates
+
+- chore(deps-dev): bump ava from 4.3.0 to 4.3.3 [#76](https://github.com/dotindustries/ogre/pull/76) ([@dependabot[bot]](https://github.com/dependabot[bot]))
+- chore(deps-dev): bump @types/node from 17.0.38 to 17.0.45 [#59](https://github.com/dotindustries/ogre/pull/59) ([@dependabot[bot]](https://github.com/dependabot[bot]))
+- chore(deps-dev): bump eslint from 8.10.0 to 8.56.0 [#138](https://github.com/dotindustries/ogre/pull/138) ([@dependabot[bot]](https://github.com/dependabot[bot]))
+- chore(deps): bump polished from 4.1.4 to 4.3.1 [#139](https://github.com/dotindustries/ogre/pull/139) ([@dependabot[bot]](https://github.com/dependabot[bot]))
+- chore(deps-dev): bump @babel/traverse from 7.17.3 to 7.23.9 [#141](https://github.com/dotindustries/ogre/pull/141) ([@dependabot[bot]](https://github.com/dependabot[bot]))
+- chore(deps): bump tslib from 2.3.1 to 2.6.2 [#137](https://github.com/dotindustries/ogre/pull/137) ([@dependabot[bot]](https://github.com/dependabot[bot]))
+- chore(deps): bump next-plausible from 3.1.6 to 3.2.0 [#51](https://github.com/dotindustries/ogre/pull/51) ([@dependabot[bot]](https://github.com/dependabot[bot]))
+- chore(deps-dev): bump ava from 4.1.0 to 4.3.0 [#57](https://github.com/dotindustries/ogre/pull/57) ([@dependabot[bot]](https://github.com/dependabot[bot]))
+- chore(deps-dev): bump typescript from 4.6.2 to 4.7.4 [#54](https://github.com/dotindustries/ogre/pull/54) ([@dependabot[bot]](https://github.com/dependabot[bot]))
+- chore(deps-dev): bump ts-node from 10.7.0 to 10.8.1 [#55](https://github.com/dotindustries/ogre/pull/55) ([@dependabot[bot]](https://github.com/dependabot[bot]))
+- chore(deps-dev): bump @auto-it/microsoft-teams from 10.34.1 to 10.37.1 [#48](https://github.com/dotindustries/ogre/pull/48) ([@dependabot[bot]](https://github.com/dependabot[bot]))
+- chore(deps-dev): bump @types/node from 17.0.21 to 17.0.38 [#49](https://github.com/dotindustries/ogre/pull/49) ([@dependabot[bot]](https://github.com/dependabot[bot]))
+
+#### Authors: 2
+
+- [@dependabot[bot]](https://github.com/dependabot[bot])
+- [@nadilas](https://github.com/nadilas)
+
+---
+
 # v0.3.0 (Sun Mar 13 2022)
 
 #### 🚀 Enhancement
