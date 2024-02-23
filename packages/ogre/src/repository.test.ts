@@ -9,8 +9,36 @@ import {
   testAuthor,
   updateHeaderData,
 } from "./test.utils";
+import { History, Reference } from "./interfaces";
 
-test("restore", (t) => {
+test("diff is ok", async (t) => {
+  const [repo, obj] = await getBaseline();
+
+  updateHeaderData(obj);
+  const zeroth = await repo.commit("header data", testAuthor);
+
+  let changeEntries = addOneNested(obj);
+  const first = await repo.commit("first nested", testAuthor);
+
+  t.equal(
+    repo.ref("refs/heads/main"),
+    first,
+    "main is pointing at wrong commit",
+  );
+
+  changeEntries += addOneNested(obj);
+
+  const second = await repo.commit("second nested", testAuthor);
+
+  const diff = repo.diff(zeroth);
+  t.equal(
+    diff.length,
+    changeEntries,
+    `invalid # of change entries: ${JSON.stringify(diff)}`,
+  );
+});
+
+test("restore", async (t) => {
   t.test("history check", async (t) => {
     const [repo, wrapped] = await getBaseline();
 
@@ -109,11 +137,9 @@ test("restore", (t) => {
 
     t.matchOnly(obj, obj2, "restored object does not equal last version.");
   });
-
-  t.end();
 });
 
-test("history", (t) => {
+test("history", async (t) => {
   t.test("history contains HEAD ref", async (t) => {
     const [repo] = await getBaseline();
 
@@ -126,37 +152,39 @@ test("history", (t) => {
     t.equal(headRef!.value, "ref: refs/heads/main");
   });
 
-  t.end();
+  t.test("empty history unreachable HEAD", async (t) => {
+    const co: ComplexObject = { nested: [] };
+    t.throws(
+      () =>
+        new Repository(co, {
+          history: {
+            original: co,
+            refs: new Map<string, Reference>(),
+            commits: [],
+          } as History<ComplexObject>,
+        }),
+      {
+        message: "unreachable: 'HEAD' is not present",
+      },
+    );
+  });
 });
 
-test("diff is ok", async (t) => {
-  const [repo, obj] = await getBaseline();
+test("reset", async (t) => {
+  t.test("reset hard", async (t) => {
+    const [repo, co] = await getBaseline();
+    co.uuid = "asdf";
+    const hash = await repo.commit("baseline", testAuthor);
+    const h1 = repo.getHistory();
+    t.equal(h1.commits.length, 1);
+    // do changes
+    const changes = updateHeaderData(co);
+    const diff = repo.diff(hash);
+    t.equal(diff.length, changes, "wrong # of changes in diff");
 
-  updateHeaderData(obj);
-  const zeroth = await repo.commit("header data", testAuthor);
-
-  let changeEntries = addOneNested(obj);
-  const first = await repo.commit("first nested", testAuthor);
-
-  t.equal(
-    repo.ref("refs/heads/main"),
-    first,
-    "main is pointing at wrong commit",
-  );
-
-  changeEntries += addOneNested(obj);
-
-  const second = await repo.commit("second nested", testAuthor);
-
-  const diff = repo.diff(zeroth);
-  t.equal(
-    diff.length,
-    changeEntries,
-    `invalid # of change entries: ${JSON.stringify(diff)}`,
-  );
-});
-
-test("reset", (t) => {
-  t.test("reset hard", async (t) => {});
-  t.end();
+    // reset
+    repo.reset("hard");
+    const diff2 = repo.diff(hash);
+    t.equal(diff2.length, 0, "failed to reset");
+  });
 });
