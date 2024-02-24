@@ -1,3 +1,16 @@
+# (Sat Feb 24 2024)
+
+#### 🚀 Enhancement
+
+- `@dotinc/ogre@0.5.0`
+  - chore: update readme [#149](https://github.com/dotindustries/ogre/pull/149) ([@nadilas](https://github.com/nadilas))
+
+#### Authors: 1
+
+- [@nadilas](https://github.com/nadilas)
+
+---
+
 # (Fri Feb 23 2024)
 
 #### 🚀 Enhancement

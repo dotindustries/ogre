@@ -1,3 +1,19 @@
+# v0.5.0 (Sat Feb 24 2024)
+
+#### 🚀 Enhancement
+
+- chore: update readme [#149](https://github.com/dotindustries/ogre/pull/149) ([@nadilas](https://github.com/nadilas))
+
+#### 🐛 Bug Fix
+
+- chore: update readme ([@nadilas](https://github.com/nadilas))
+
+#### Authors: 1
+
+- [@nadilas](https://github.com/nadilas)
+
+---
+
 # v0.4.0 (Fri Feb 23 2024)
 
 #### 🚀 Enhancement
