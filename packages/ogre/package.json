@@ -12,6 +12,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "test": "nyc --reporter=lcov tap --coverage-report=none --allow-incomplete-coverage",
+    "test:node": "node --import tsx --test src/**/*.test.ts",
     "coverage:html": "nyc report --reporter=html"
   },
   "author": "János Veres @nadilas",
@@ -29,7 +30,8 @@
     "tap": "^18.7.0",
     "ts-node": "^10.8.1",
     "typescript": "^4.7.4",
-    "uuid": "^8.3.2"
+    "uuid": "^8.3.2",
+    "tsx": "^4.7.1"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",

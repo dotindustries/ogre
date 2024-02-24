@@ -1,7 +1,7 @@
 # ogre
 
 An in-memory git-like repository for objects for when you need to
-keep the history around for a bit longer.
+keep the history around for a bit longer. The library uses json-patch RFC6902 for representing diffs.
 
 [![codecov](https://codecov.io/gh/dotindustries/ogre/branch/main/graph/badge.svg?token=23M014CWLK)](https://codecov.io/gh/dotindustries/ogre) [![Test coverage](https://github.com/dotindustries/ogre/actions/workflows/coverage.yml/badge.svg)](https://github.com/dotindustries/ogre/actions/workflows/coverage.yml)
 
@@ -11,9 +11,11 @@ keep the history around for a bit longer.
 - Branch
 - Tags
 - Checkout
+- Reset (soft and hard)
+- Diff
 - Visualization via `@dotinc/ogre-react`
 - Merge
-  - fast-forward
+    - fast-forward
 
 ## Usage
 
@@ -51,5 +53,5 @@ repo.checkout(init);
 ## TODO
 
 - [ ] Merge
-  - [ ] recursive
-  - [ ] octopus
+    - [ ] recursive
+    - [ ] octopus
