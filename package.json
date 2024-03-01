@@ -23,7 +23,7 @@
     "@auto-it/conventional-commits": "^11.0.7",
     "@auto-it/microsoft-teams": "^11.0.7",
     "@auto-it/npm": "^11.0.7",
-    "@auto-it/released": "^11.0.7",
+    "@auto-it/released": "^11.1.1",
     "auto": "^11.0.7",
     "dotenv-cli": "^7.3.0",
     "prettier": "^3.2.5",
