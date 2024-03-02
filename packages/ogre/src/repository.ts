@@ -7,6 +7,9 @@ import {
   generate,
   Observer,
   Operation,
+  validate,
+  applyPatch,
+  JsonPatchError,
 } from "fast-json-patch";
 import { calculateCommitHash, Commit } from "./commit";
 import { History, Reference } from "./interfaces";
@@ -36,6 +39,17 @@ export interface RepositoryObject<T extends { [k: string]: any }> {
    * @param shaishTo expression (e.g. refs (branches, tags), commitSha)
    */
   diff(shaishFrom: string, shaishTo?: string): Operation[];
+
+  /**
+   * Returns pending changes.
+   */
+  status(): Operation[];
+
+  /**
+   * Applies a patch to the repository's HEAD
+   * @param patch
+   */
+  apply(patch: Operation[]): void;
 
   // It returns the reference where we are currently at
   head(): string;
@@ -116,9 +130,18 @@ export class Repository<T extends { [k: PropertyKey]: any }>
     if (!patchToTarget || patchToTarget.length < 1) {
       return;
     }
-    unobserve(this.data, this.observer);
+    this.observer.unobserve();
     patchToTarget.reduce(applyReducer, this.data);
     this.observer = observe(this.data);
+  }
+
+  apply(patch: Operation[]): JsonPatchError | undefined {
+    const err = validate(patch, this.data);
+    if (err) {
+      return err;
+    }
+    applyPatch(this.data, patch);
+    // const changed = patch.reduce(applyReducer, this.data);
   }
 
   reset(
@@ -159,6 +182,15 @@ export class Repository<T extends { [k: PropertyKey]: any }>
     }
 
     return REFS_HEAD_KEY; // detached state
+  }
+
+  status() {
+    const commit = this.commitAtHead();
+    if (!commit) {
+      // on root repo return the pending changes
+      return compare(this.original, this.data); // this.observer.patches is empty?? :(
+    }
+    return this.diff(commit.hash);
   }
 
   diff(shaishFrom: string, shaishTo?: string): Operation[] {
@@ -455,21 +487,6 @@ const treeToObject = <T = any>(tree: string): T => {
 const getLastItem = (thePath: string) =>
   thePath.substring(thePath.lastIndexOf("/") + 1);
 
-/**
- * Traverses the commit tree backwards and reassembles the changelog
- * @param commit
- * @param commitsList
- */
-const traverseAndCollectChangelog = (commit: Commit, commitsList: Commit[]) => {
-  let c: Commit | undefined = commit;
-  let clog: Operation[] = [];
-  while (c !== undefined) {
-    clog = [...commit.changes, ...clog];
-    c = commitsList.find((parent) => parent.hash === c?.parent);
-  }
-  return clog;
-};
-
 const mapPath = (
   from: Commit,
   to: Commit,
@@ -613,16 +630,29 @@ export const printChangeLog = <T extends { [k: string]: any }>(
   repository: RepositoryObject<T>,
 ) => {
   console.log("----------------------------------------------------------");
-  console.log(`Changelog at ${repository.head()}`);
+  console.log("Changelog");
+  console.log("----------------------------------------------------------");
   const history = repository.getHistory();
   const head = commitAtRefIn(repository.head(), history.refs, history.commits);
   if (!head) {
     throw new Error(`fatal: HEAD is not defined`);
   }
-  const changeLog = traverseAndCollectChangelog(head, history.commits);
-  for (const [, chg] of changeLog.entries()) {
-    console.log(`  ${JSON.stringify(chg)}`);
+  let c: Commit | undefined = head;
+  while (c) {
+    console.log(
+      `${c.hash} ${refsAtCommit(history.refs, c)
+        .map((r) => r.name)
+        .join(" ")}`,
+    );
+    for (const chg of c.changes) {
+      printChange(chg);
+    }
+    c = history.commits.find((parent) => parent.hash === c?.parent);
   }
-
+  console.log("End of changelog");
   console.log("----------------------------------------------------------");
+};
+
+export const printChange = (chg: Operation) => {
+  console.log(`  ${JSON.stringify(chg)}`);
 };

@@ -13,6 +13,11 @@ keep the history around for a bit longer. The library uses json-patch RFC6902 fo
 - Checkout
 - Reset (soft and hard)
 - Diff
+- Status
+- Apply
+  > ⚠️ Setting a value for an undefined prop `{prop: undefined}` will result in the `compare` call as a `replace`
+  operation, but will be recorded by the observer as
+  an `add` operation. See https://github.com/Starcounter-Jack/JSON-Patch/issues/280 for details
 - Visualization via `@dotinc/ogre-react`
 - Merge
     - fast-forward

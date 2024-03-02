@@ -7,6 +7,7 @@ import {
   testAuthor,
   updateHeaderData,
 } from "./test.utils";
+import { printChangeLog } from "./repository";
 
 test("baseline with 1 commit and zero changelog entries", async (t) => {
   const [repo] = await getBaseline();
@@ -38,6 +39,23 @@ test("no commit without changes after recent commit", async (t) => {
   await t.rejects(repo.commit("baseline", testAuthor), {
     message: "no changes to commit",
   });
+});
+
+test("overwrite nested array changes are recognized", async (t) => {
+  const [repo] = await getBaseline();
+  repo.data.name = "new name";
+  await repo.commit("baseline", testAuthor);
+  repo.data.nested = [{ name: "new item", uuid: "asdf" }];
+  await repo.commit("overwrite nested array", testAuthor);
+});
+
+test("change of nested array element is recognized", async (t) => {
+  const [repo] = await getBaseline();
+  repo.data.name = "new name";
+  addOneStep(repo.data);
+  await repo.commit("baseline", testAuthor);
+  repo.data.nested[0].name = "another name which is different";
+  await repo.commit("changed nested array object", testAuthor);
 });
 
 test("treeHash of commit is matching content", async (t) => {
