@@ -1,3 +1,16 @@
+# v0.6.0 (Sat Mar 02 2024)
+
+#### 🚀 Enhancement
+
+- feat: status and apply [#156](https://github.com/dotindustries/ogre/pull/156) ([@nadilas](https://github.com/nadilas))
+- feat: status and apply ([@nadilas](https://github.com/nadilas))
+
+#### Authors: 1
+
+- [@nadilas](https://github.com/nadilas)
+
+---
+
 # v0.5.0 (Sat Feb 24 2024)
 
 #### 🚀 Enhancement
