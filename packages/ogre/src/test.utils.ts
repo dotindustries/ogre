@@ -16,14 +16,15 @@ export type ComplexObject = {
 
 export const testAuthor = "User name <name@domain.com>";
 
-export async function getBaseline(): Promise<
-  [RepositoryObject<ComplexObject>, ComplexObject]
-> {
+export async function getBaseline(
+  obj?: Partial<ComplexObject>,
+): Promise<[RepositoryObject<ComplexObject>, ComplexObject]> {
   const co: ComplexObject = {
     uuid: undefined,
     name: undefined,
     description: undefined,
     nested: [],
+    ...obj,
   };
   const repo = new Repository(co, {});
   return [repo, co];

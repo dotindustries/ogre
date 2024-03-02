@@ -1,7 +1,8 @@
 import { test } from "tap";
 
-import { Repository } from "./repository";
+import { printChange, printChangeLog, Repository } from "./repository";
 import {
+  addOneStep,
   addOneStep as addOneNested,
   ComplexObject,
   getBaseline,
@@ -10,6 +11,7 @@ import {
   updateHeaderData,
 } from "./test.utils";
 import { History, Reference } from "./interfaces";
+import { compare, Operation } from "fast-json-patch";
 
 test("diff is ok", async (t) => {
   const [repo, obj] = await getBaseline();
@@ -186,5 +188,148 @@ test("reset", async (t) => {
     repo.reset("hard");
     const diff2 = repo.diff(hash);
     t.equal(diff2.length, 0, "failed to reset");
+  });
+});
+
+test("status", async (t) => {
+  t.test("clean repo no change", async (t) => {
+    const [repo] = await getBaseline();
+    const cleanState = repo.status();
+    t.match(cleanState, [], "Shouldn't have pending changes");
+  });
+  t.test("clean repo pending change", async (t) => {
+    const [repo] = await getBaseline({ name: "base name" });
+    repo.data.name = "changed name";
+    const dirtyState = repo.status();
+    t.equal(dirtyState.length, 1, "Status doesn't contain changes");
+  });
+  t.test("reading status doesn't clean observer", async (t) => {
+    const [repo] = await getBaseline({ name: "base name" });
+    repo.data.name = "changed name";
+    const dirtyState = repo.status();
+    t.equal(dirtyState.length, 1, "Status doesn't contain changes");
+
+    const dirtyState2 = repo.status();
+    t.equal(dirtyState2.length, 1, "Status doesn't contain changes");
+    t.match(dirtyState2, dirtyState2, "different pending changes??");
+  });
+  t.test("after commit no change", async (t) => {
+    const [repo] = await getBaseline();
+    repo.data.name = "new name";
+    await repo.commit("baseline", testAuthor);
+    const cleanState = repo.status();
+    t.match(cleanState, [], "Shouldn't have pending changes");
+  });
+  t.test("after commit pending change", async (t) => {
+    const [repo] = await getBaseline();
+    repo.data.name = "new name";
+    await repo.commit("baseline", testAuthor);
+    const cleanState = repo.status();
+    t.match(cleanState, [], "Shouldn't have pending changes");
+    repo.data.name = "changed name";
+    const dirtyState = repo.status();
+    t.equal(dirtyState.length, 1, "Status doesn't contain changes");
+  });
+  t.test("after commit pending change for rewrite array", async (t) => {
+    const [repo] = await getBaseline();
+    repo.data.name = "new name";
+    await repo.commit("baseline", testAuthor);
+    const cleanState = repo.status();
+    t.match(cleanState, [], "Shouldn't have pending changes");
+    repo.data.nested = [{ name: "new item", uuid: "asdf" }];
+    const dirtyState = repo.status();
+    t.equal(dirtyState.length, 1, "Status doesn't contain changes");
+  });
+  t.test("change of nested array element prop", async (t) => {
+    const [repo] = await getBaseline();
+    repo.data.name = "new name";
+    addOneStep(repo.data);
+    await repo.commit("baseline", testAuthor);
+    const cleanState = repo.status();
+    t.match(cleanState, [], "Shouldn't have pending changes");
+    repo.data.nested[0].name = "another name which is different";
+    const dirtyState = repo.status();
+    t.equal(dirtyState?.length, 1, "Status doesn't contain changes");
+  });
+});
+
+test("apply", async (t) => {
+  t.test("single patch", async (t) => {
+    const [repo] = await getBaseline({ name: "base name" });
+    const cleanState = repo.status();
+    t.match(cleanState, [], "Shouldn't have pending changes");
+
+    const targetState = {
+      uuid: undefined,
+      name: "a name",
+      description: undefined,
+      nested: [{ name: "new item", uuid: "asdf" }],
+    };
+    const patches = compare(repo.data, targetState);
+    // this should record changes on the observer
+    const err = repo.apply(patches);
+    t.match(err, undefined, "Failed to apply patch");
+    t.match(repo.data, targetState, "The final state does not match up");
+    const dirtyState = repo.status();
+    t.equal(dirtyState.length, 2, "Status doesn't contain changes");
+    t.match(dirtyState, patches, "It should have the right changes");
+  });
+
+  t.test(
+    "patch for undefined props doesn't work as expected https://github.com/Starcounter-Jack/JSON-Patch/issues/280",
+    async (t) => {
+      const [repo] = await getBaseline();
+      const cleanState = repo.status();
+      t.match(cleanState, [], "Shouldn't have pending changes");
+
+      const targetState: ComplexObject = {
+        uuid: undefined,
+        description: undefined,
+        name: "a name",
+        nested: [],
+      };
+      const patches = compare(repo.data, targetState);
+      // this should record changes on the observer
+      const err = repo.apply(patches);
+      t.match(
+        err,
+        {
+          name: "OPERATION_PATH_UNRESOLVABLE",
+          operation: {
+            op: "replace",
+            path: "/name",
+            value: "a name",
+          },
+        },
+        "Failed to apply patch",
+      );
+      t.notMatch(
+        repo.data,
+        targetState,
+        "The final state shoould not match up, because patch failed",
+      );
+      const dirtyState = repo.status();
+      t.equal(dirtyState.length, 0, "Status doesn't contain changes");
+    },
+  );
+
+  t.test("multiple patches", async (t) => {
+    const [repo] = await getBaseline({ name: "base name" });
+
+    const cleanState = repo.status();
+    t.match(cleanState, [], "Shouldn't have pending changes");
+    const targetState = {
+      uuid: undefined,
+      name: "a name",
+      description: undefined,
+      nested: [{ name: "new item", uuid: "asdf" }],
+    };
+    const patches = compare(repo.data, targetState);
+    const err = repo.apply(patches);
+    t.equal(err, undefined, "Failed to apply patch");
+    const dirtyState = repo.status();
+    t.equal(dirtyState?.length, 2, "Status doesn't contain changes");
+    t.match(dirtyState, patches, "It should have the right changes");
+    t.match(repo.data, targetState, "The final state does not match up");
   });
 });
