@@ -7,8 +7,7 @@ export interface Reference {
   value: string;
 }
 
-export interface History<T extends { [k: string]: any }> {
-  original: T;
+export interface History {
   refs: Map<string, Reference>;
   commits: Commit[];
 }

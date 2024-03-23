@@ -163,7 +163,7 @@ test("history", async (t) => {
             original: co,
             refs: new Map<string, Reference>(),
             commits: [],
-          } as History<ComplexObject>,
+          } as History,
         }),
       {
         message: "unreachable: 'HEAD' is not present",
@@ -201,17 +201,29 @@ test("status", async (t) => {
     const [repo] = await getBaseline({ name: "base name" });
     repo.data.name = "changed name";
     const dirtyState = repo.status();
-    t.equal(dirtyState.length, 1, "Status doesn't contain changes");
+    t.equal(
+      dirtyState.length,
+      1,
+      `Status doesn't contain the expected # of changes: ${JSON.stringify(dirtyState)}`,
+    );
   });
-  t.test("reading status doesn't clean observer", async (t) => {
+  t.test("reading status shouldn't clean observer", async (t) => {
     const [repo] = await getBaseline({ name: "base name" });
     repo.data.name = "changed name";
     const dirtyState = repo.status();
-    t.equal(dirtyState.length, 1, "Status doesn't contain changes");
+    t.equal(
+      dirtyState.length,
+      1,
+      `Status doesn't contain the expected # of changes: ${JSON.stringify(dirtyState)}`,
+    );
 
     const dirtyState2 = repo.status();
-    t.equal(dirtyState2.length, 1, "Status doesn't contain changes");
-    t.match(dirtyState2, dirtyState2, "different pending changes??");
+    t.equal(
+      dirtyState2.length,
+      1,
+      `Status doesn't contain the expected # of changes: ${JSON.stringify(dirtyState)}`,
+    );
+    t.match(dirtyState2, dirtyState2, "why different pending changes??");
   });
   t.test("after commit no change", async (t) => {
     const [repo] = await getBaseline();
@@ -275,43 +287,27 @@ test("apply", async (t) => {
     t.match(dirtyState, patches, "It should have the right changes");
   });
 
-  t.test(
-    "patch for undefined props doesn't work as expected https://github.com/Starcounter-Jack/JSON-Patch/issues/280",
-    async (t) => {
-      const [repo] = await getBaseline();
-      const cleanState = repo.status();
-      t.match(cleanState, [], "Shouldn't have pending changes");
+  t.test("patch for undefined props with workaround", async (t) => {
+    // solution for workaround from: https://github.com/Starcounter-Jack/JSON-Patch/issues/280
+    const [repo] = await getBaseline();
+    const cleanState = repo.status();
+    t.match(cleanState, [], "Shouldn't have pending changes");
 
-      const targetState: ComplexObject = {
-        uuid: undefined,
-        description: undefined,
-        name: "a name",
-        nested: [],
-      };
-      const patches = compare(repo.data, targetState);
-      // this should record changes on the observer
-      const err = repo.apply(patches);
-      t.match(
-        err,
-        {
-          name: "OPERATION_PATH_UNRESOLVABLE",
-          operation: {
-            op: "replace",
-            path: "/name",
-            value: "a name",
-          },
-        },
-        "Failed to apply patch",
-      );
-      t.notMatch(
-        repo.data,
-        targetState,
-        "The final state shoould not match up, because patch failed",
-      );
-      const dirtyState = repo.status();
-      t.equal(dirtyState.length, 0, "Status doesn't contain changes");
-    },
-  );
+    const targetState: ComplexObject = {
+      uuid: undefined,
+      description: undefined,
+      name: "a name",
+      nested: [],
+    };
+    const patches = compare(repo.data, targetState);
+    // this should record changes on the observer
+    const err = repo.apply(patches);
+    t.equal(err, undefined, "Failed to apply patch");
+
+    t.match(repo.data, targetState, "The final state should match up");
+    const dirtyState = repo.status();
+    t.equal(dirtyState.length, 1, "Status should contain 1 change");
+  });
 
   t.test("multiple patches", async (t) => {
     const [repo] = await getBaseline({ name: "base name" });
