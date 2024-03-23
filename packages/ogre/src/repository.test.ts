@@ -1,6 +1,6 @@
 import { test } from "tap";
 
-import { printChange, printChangeLog, Repository } from "./repository";
+import { Repository } from "./repository";
 import {
   addOneStep,
   addOneStep as addOneNested,
@@ -12,6 +12,7 @@ import {
 } from "./test.utils";
 import { History, Reference } from "./interfaces";
 import { compare, Operation } from "fast-json-patch";
+import { printChange, printChangeLog } from "./utils";
 
 test("diff is ok", async (t) => {
   const [repo, obj] = await getBaseline();

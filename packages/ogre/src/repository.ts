@@ -1,27 +1,37 @@
 import {
-  observe,
-  unobserve,
-  compare,
+  applyPatch,
   applyReducer,
+  compare,
   deepClone,
   generate,
+  JsonPatchError,
+  observe,
   Observer,
   Operation,
+  unobserve,
   validate,
-  applyPatch,
-  JsonPatchError,
 } from "fast-json-patch";
 import { calculateCommitHash, Commit } from "./commit";
 import { History, Reference } from "./interfaces";
-import { validBranch, validRef } from "./ref";
-import { compressSync, decompressSync, strFromU8, strToU8 } from "fflate";
-
-const tagRefPathPrefix = "refs/tags/";
-const headsRefPathPrefix = "refs/heads/";
-const headValueRefPrefix = "ref: ";
-
-export const REFS_HEAD_KEY = "HEAD";
-export const REFS_MAIN_KEY = `${headsRefPathPrefix}main`;
+import { compressSync, strToU8 } from "fflate";
+import {
+  brancheNameToRef,
+  cleanRefValue,
+  commitAtRefIn,
+  createHeadRefValue,
+  getLastRefPathElement,
+  headValueRefPrefix,
+  localHeadPathPrefix,
+  mapPath,
+  REFS_HEAD_KEY,
+  REFS_MAIN_KEY,
+  refsAtCommit,
+  shaishToCommit,
+  tagToRef,
+  treeToObject,
+  validateBranchName,
+  validateRef,
+} from "./utils";
 
 export interface RepositoryOptions<T extends { [k: string]: any }> {
   history?: History;
@@ -196,7 +206,7 @@ export class Repository<T extends { [k: PropertyKey]: any }>
     const refs = refsAtCommit(this.refs, commit);
     // reset only moves heads and not tags
     const moveableRefs = refs.filter((r) =>
-      r.name.startsWith(headsRefPathPrefix),
+      r.name.startsWith(localHeadPathPrefix()),
     );
 
     for (const ref of moveableRefs) {
@@ -216,7 +226,7 @@ export class Repository<T extends { [k: PropertyKey]: any }>
 
     if (currentHeadRef.value.includes(headValueRefPrefix)) {
       const refName = cleanRefValue(currentHeadRef.value);
-      if (this.refs.has(refName)) return getLastItem(refName);
+      if (this.refs.has(refName)) return getLastRefPathElement(refName);
     }
 
     return REFS_HEAD_KEY; // detached state
@@ -471,7 +481,7 @@ export class Repository<T extends { [k: PropertyKey]: any }>
     const val =
       typeof value === "string" ? createHeadRefValue(value) : value.hash;
     if (!ref) {
-      ref = { name: getLastItem(refName), value: val };
+      ref = { name: getLastRefPathElement(refName), value: val };
     } else {
       ref.value = val;
     }
@@ -486,7 +496,7 @@ export class Repository<T extends { [k: PropertyKey]: any }>
         throw new Error(`unreachable: HEAD not present`);
       }
       throw new Error(
-        `fatal: not a valid object name: '${getLastItem(headRef)}'`,
+        `fatal: not a valid object name: '${getLastRefPathElement(headRef)}'`,
       );
     }
     this.refs.set(refKey, { name: name, value: headCommit.hash });
@@ -516,180 +526,3 @@ export class Repository<T extends { [k: PropertyKey]: any }>
     return tagRef;
   }
 }
-
-const treeToObject = <T = any>(tree: string): T => {
-  return JSON.parse(strFromU8(decompressSync(Buffer.from(tree, "base64"))));
-};
-
-const getLastItem = (thePath: string) =>
-  thePath.substring(thePath.lastIndexOf("/") + 1);
-
-const mapPath = (
-  from: Commit,
-  to: Commit,
-  commits: Commit[],
-): [isAncestor: boolean] => {
-  let c: Commit | undefined = to;
-  while (c !== undefined) {
-    c = commits.find((parent) => parent.hash === c?.parent);
-    if (c?.hash === from.hash) {
-      return [true];
-    }
-  }
-  return [false];
-};
-
-/**
- * Returns the commit to which the provided ref is pointing
- * @param ref - needs to be in key format, e.g. refs/heads/... or refs/tags/...
- * @param references
- * @param commitsList
- */
-const commitAtRefIn = (
-  ref: string,
-  references: Map<string, Reference>,
-  commitsList: Commit[],
-) => {
-  const reference = references.get(ref);
-  if (!reference) {
-    throw new Error(`unreachable: '${ref}' is not present`);
-  }
-  let commitHash;
-  if (reference.value.includes(headValueRefPrefix)) {
-    const refKey = cleanRefValue(reference.value);
-    const targetRef = references.get(refKey);
-    if (!targetRef) {
-      // target branch may not have been saved yet
-      return undefined;
-    }
-    commitHash = targetRef.value;
-  } else {
-    commitHash = reference.value;
-  }
-  for (const c of commitsList) {
-    if (c.hash === commitHash) {
-      return c;
-    }
-  }
-  return undefined;
-};
-
-const refsAtCommit = (references: Map<string, Reference>, commit: Commit) => {
-  const list: Array<Reference> = [];
-  for (const [name, ref] of references.entries()) {
-    if (ref.value === commit.hash) {
-      list.push(ref);
-    }
-  }
-  return list;
-};
-
-/**
- * Accepts a shaish expression (e.g. refs (branches, tags), commitSha) and returns
- * - a commit of type Commit
- * - isRef boolean whether it is a direct reference
- * - ref the key of the reference
- */
-const shaishToCommit = (
-  shaish: string,
-  references: Map<string, Reference>,
-  commitsList: Commit[],
-): [commit: Commit, isRef: boolean, ref: string | undefined] => {
-  let sha = shaish;
-  let isRef = false;
-  let refKey: string | undefined = undefined;
-
-  // check for refs
-  for (const [name, ref] of references.entries()) {
-    // match on
-    if (ref.name === shaish || name === shaish) {
-      isRef = true;
-      refKey = name;
-      sha = ref.value;
-      if (sha.includes(headValueRefPrefix)) {
-        const cleanedRef = cleanRefValue(sha);
-        const c = commitAtRefIn(cleanedRef, references, commitsList);
-        if (!c) {
-          throw new Error(`${cleanedRef} points to non-existing commit`);
-        }
-        return [c, isRef, refKey];
-      }
-      break;
-    }
-  }
-  // check for partial sha matches
-  const found = commitsList.filter((c) => c.hash.indexOf(sha) > -1);
-  if (found.length === 0) {
-    throw new Error(`pathspec '${shaish}' did not match any known refs`);
-  }
-  // but sha should be specific enough to resolve to 1 commit
-  if (found.length > 1) {
-    throw new Error(`commit `);
-  }
-  return [found[0], isRef, refKey];
-};
-
-export const createHeadRefValue = (refKey: string) => {
-  return `${headValueRefPrefix}${refKey}`;
-};
-
-export const isTagRef = (refKey: string) =>
-  refKey.indexOf(tagRefPathPrefix) > -1;
-
-export const cleanRefValue = (ref: string) =>
-  ref.replace(headValueRefPrefix, "");
-
-export const brancheNameToRef = (name: string) => {
-  return `${headsRefPathPrefix}${name}`;
-};
-
-export const tagToRef = (tag: string) => {
-  return `${tagRefPathPrefix}${tag}`;
-};
-
-export const validateBranchName = (name: string) => {
-  if (!validBranch(name)) {
-    throw new Error(`invalid ref name`);
-  }
-};
-
-export const validateRef = (name: string, oneLevel: boolean = true) => {
-  if (!validRef(name, oneLevel)) {
-    throw new Error(`invalid ref name`);
-  }
-};
-
-/**
- * Prints the underlying changelog of a repository
- * @param repository
- */
-export const printChangeLog = <T extends { [k: string]: any }>(
-  repository: RepositoryObject<T>,
-) => {
-  console.log("----------------------------------------------------------");
-  console.log("Changelog");
-  console.log("----------------------------------------------------------");
-  const history = repository.getHistory();
-  const head = commitAtRefIn(repository.head(), history.refs, history.commits);
-  if (!head) {
-    throw new Error(`fatal: HEAD is not defined`);
-  }
-  let c: Commit | undefined = head;
-  while (c) {
-    console.log(
-      `${c.hash} ${refsAtCommit(history.refs, c)
-        .map((r) => r.name)
-        .join(" ")}`,
-    );
-    for (const chg of c.changes) {
-      printChange(chg);
-    }
-    c = history.commits.find((parent) => parent.hash === c?.parent);
-  }
-  console.log("End of changelog");
-  console.log("----------------------------------------------------------");
-};
-
-export const printChange = (chg: Operation) => {
-  console.log(`  ${JSON.stringify(chg)}`);
-};

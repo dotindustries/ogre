@@ -8,7 +8,8 @@ import {
   testAuthor,
   updateHeaderData,
 } from "./test.utils";
-import { printChangeLog, Repository } from "./repository";
+import { Repository } from "./repository";
+import { printChangeLog } from "./utils";
 
 test("baseline with 1 commit and zero changelog entries", async (t) => {
   const [repo] = await getBaseline();
