@@ -2,12 +2,13 @@ import { test } from "tap";
 
 import {
   addOneStep,
+  ComplexObject,
   getBaseline,
   sumChanges,
   testAuthor,
   updateHeaderData,
 } from "./test.utils";
-import { printChangeLog } from "./repository";
+import { printChangeLog, Repository } from "./repository";
 
 test("baseline with 1 commit and zero changelog entries", async (t) => {
   const [repo] = await getBaseline();
@@ -21,6 +22,21 @@ test("head points to main", async (t) => {
   const [repo] = await getBaseline();
 
   t.equal(repo.head(), "refs/heads/main", "head not pointing where it should");
+});
+
+test("changes are available for commit if starting from empty", async (t) => {
+  const repo = new Repository<ComplexObject>({}, {});
+  repo.data.name = "some data";
+
+  const dirty = repo.status();
+
+  t.equal(
+    dirty.length,
+    1,
+    "Status does not contain the right amount of changes",
+  );
+  await repo.commit("baseline", testAuthor);
+  t.pass();
 });
 
 test("no commit without changes", async (t) => {

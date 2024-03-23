@@ -2,13 +2,13 @@ import { digest } from "./hash";
 import { Operation } from "fast-json-patch";
 
 export interface Commit {
-  // The hash of the commit
-  // Is an sha256 of:
-  // - tree object reference (changes?)
-  // - parent object reference (parent hash)
-  // - author
-  // - author commit timestamp with timezone
-  // - commit message
+  /*The hash of the commit. Is an sha256 of:
+          - tree object reference (changes?)
+          - parent object reference (parent hash)
+          - author
+          - author commit timestamp with timezone
+          - commit message
+        */
   hash: string;
   tree: string;
 
