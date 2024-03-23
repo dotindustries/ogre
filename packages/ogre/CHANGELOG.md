@@ -1,3 +1,16 @@
+# v0.8.0 (Sat Mar 23 2024)
+
+#### 🚀 Enhancement
+
+- feat: expose util functions [#160](https://github.com/dotindustries/ogre/pull/160) ([@nadilas](https://github.com/nadilas))
+- feat: expose util functions ([@nadilas](https://github.com/nadilas))
+
+#### Authors: 1
+
+- [@nadilas](https://github.com/nadilas)
+
+---
+
 # v0.7.0 (Sat Mar 23 2024)
 
 #### 🚀 Enhancement

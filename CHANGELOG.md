@@ -2,6 +2,19 @@
 
 #### 🚀 Enhancement
 
+- `@dotinc/ogre@0.8.0`
+  - feat: expose util functions [#160](https://github.com/dotindustries/ogre/pull/160) ([@nadilas](https://github.com/nadilas))
+
+#### Authors: 1
+
+- [@nadilas](https://github.com/nadilas)
+
+---
+
+# (Sat Mar 23 2024)
+
+#### 🚀 Enhancement
+
 - `@dotinc/ogre@0.7.0`
   - feat: allow access to remote state [#158](https://github.com/dotindustries/ogre/pull/158) ([@nadilas](https://github.com/nadilas))
 
