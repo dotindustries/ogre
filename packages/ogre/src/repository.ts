@@ -24,13 +24,13 @@ export const REFS_HEAD_KEY = "HEAD";
 export const REFS_MAIN_KEY = `${headsRefPathPrefix}main`;
 
 export interface RepositoryOptions<T extends { [k: string]: any }> {
-  history?: History<T>;
+  history?: History;
 }
 
 export interface RepositoryObject<T extends { [k: string]: any }> {
   data: T;
 
-  getHistory(): History<T>;
+  getHistory(): History;
 
   /**
    * Returns the diff between the current HEAD and provided shaish expression
@@ -65,7 +65,7 @@ export interface RepositoryObject<T extends { [k: string]: any }> {
 
   createBranch(name: string): string;
 
-  merge(source: string | RepositoryObject<T> | History<T>): string;
+  merge(source: string | RepositoryObject<T> | History): string;
 
   /**
    * Branch returns the current branch name
@@ -88,10 +88,11 @@ export interface RepositoryObject<T extends { [k: string]: any }> {
 export class Repository<T extends { [k: PropertyKey]: any }>
   implements RepositoryObject<T>
 {
-  constructor(obj: T, options: RepositoryOptions<T>) {
+  constructor(obj: Partial<T>, options: RepositoryOptions<T>) {
     this.original = deepClone(obj);
-    this.data = obj;
-    this.observer = observe(obj);
+    // store js ref, so obj can still be modified without going through repo.data
+    this.data = obj as T;
+    this.observer = observe(obj as T);
     this.refs =
       options.history?.refs ??
       new Map<string, Reference>([
@@ -136,9 +137,32 @@ export class Repository<T extends { [k: PropertyKey]: any }>
   }
 
   apply(patch: Operation[]): JsonPatchError | undefined {
-    const err = validate(patch, this.data);
+    const p = deepClone(patch) as Operation[];
+    const err = validate(p, this.data);
     if (err) {
-      return err;
+      // credit goes to @NicBright
+      // https://github.com/Starcounter-Jack/JSON-Patch/issues/280#issuecomment-1980435509
+      if (err.name === "OPERATION_PATH_UNRESOLVABLE") {
+        if (err.operation.op === "replace") {
+          // can happen e.g. when states are like this:
+          // from.x = undefined
+          // to.x = 'something'
+          const op = p.find(
+            (o) => o.path === err.operation.path && o.op === err.operation.op,
+          );
+          if (!op) return err;
+          // try it once more with operation 'add' instead
+          op.op = "add";
+          return this.apply(p);
+        } else if (err.operation.op === "remove") {
+          // Can happen e.g. when states are like this:
+          // from.entity.reason = null;
+          // to.entity.reason = undefined;
+          // we don't do anything in this case because "to" is already in a good state!
+        }
+      } else {
+        return err;
+      }
     }
     applyPatch(this.data, patch);
     // const changed = patch.reduce(applyReducer, this.data);
@@ -347,9 +371,8 @@ export class Repository<T extends { [k: PropertyKey]: any }>
     return commitsList;
   }
 
-  getHistory(): History<T> {
+  getHistory(): History {
     return {
-      original: this.original,
       refs: new Map(this.refs),
       commits: this.collectCommits(),
     };
@@ -370,7 +393,7 @@ export class Repository<T extends { [k: PropertyKey]: any }>
 
   // endregion
 
-  merge(source: string | RepositoryObject<T> | History<T>): string {
+  merge(source: string | RepositoryObject<T> | History): string {
     // inspiration
     // http://think-like-a-git.net
     // also check isomorphic-git
