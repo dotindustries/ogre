@@ -80,6 +80,11 @@ export interface RepositoryObject<T extends { [k: string]: any }> {
    * @param shaish
    */
   reset(mode?: "soft" | "hard", shaish?: string): void;
+
+  /**
+   * Returns the remote references from the initialization of the repository
+   */
+  remote(): Map<string, Reference> | undefined;
 }
 
 /**
@@ -89,6 +94,8 @@ export class Repository<T extends { [k: PropertyKey]: any }>
   implements RepositoryObject<T>
 {
   constructor(obj: Partial<T>, options: RepositoryOptions<T>) {
+    // FIXME: move this to refs/remote as git would do?
+    this.remoteRefs = options.history?.refs;
     this.original = deepClone(obj);
     // store js ref, so obj can still be modified without going through repo.data
     this.data = obj as T;
@@ -120,10 +127,17 @@ export class Repository<T extends { [k: PropertyKey]: any }>
 
   data: T;
 
+  // stores the remote state upon initialization
+  private readonly remoteRefs: Map<string, Reference> | undefined;
+
   private observer: Observer<T>;
 
   private readonly refs: Map<string, Reference>;
   private readonly commits: Commit[];
+
+  remote(): Map<string, Reference> | undefined {
+    return this.remoteRefs;
+  }
 
   private moveTo(commit: Commit) {
     const targetTree = treeToObject(commit.tree);
