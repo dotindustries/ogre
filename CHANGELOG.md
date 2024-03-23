@@ -1,3 +1,22 @@
+# (Sat Mar 23 2024)
+
+#### 🚀 Enhancement
+
+- `@dotinc/ogre@0.7.0`
+  - feat: allow access to remote state [#158](https://github.com/dotindustries/ogre/pull/158) ([@nadilas](https://github.com/nadilas))
+
+#### 🐛 Bug Fix
+
+- `@dotinc/ogre@0.7.0`
+  - fix: remove history generic [#159](https://github.com/dotindustries/ogre/pull/159) ([@nadilas](https://github.com/nadilas))
+  - fix: working undefined to obj patch [#157](https://github.com/dotindustries/ogre/pull/157) ([@nadilas](https://github.com/nadilas))
+
+#### Authors: 1
+
+- [@nadilas](https://github.com/nadilas)
+
+---
+
 # (Sat Mar 02 2024)
 
 #### 🚀 Enhancement

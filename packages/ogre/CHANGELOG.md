@@ -1,3 +1,23 @@
+# v0.7.0 (Sat Mar 23 2024)
+
+#### 🚀 Enhancement
+
+- feat: allow access to remote state [#158](https://github.com/dotindustries/ogre/pull/158) ([@nadilas](https://github.com/nadilas))
+- feat: allow access to remote state ([@nadilas](https://github.com/nadilas))
+
+#### 🐛 Bug Fix
+
+- fix: remove history generic [#159](https://github.com/dotindustries/ogre/pull/159) ([@nadilas](https://github.com/nadilas))
+- fix: remove history generic ([@nadilas](https://github.com/nadilas))
+- fix: working undefined to obj patch [#157](https://github.com/dotindustries/ogre/pull/157) ([@nadilas](https://github.com/nadilas))
+- fix: working undefined to obj patch ([@nadilas](https://github.com/nadilas))
+
+#### Authors: 1
+
+- [@nadilas](https://github.com/nadilas)
+
+---
+
 # v0.6.0 (Sat Mar 02 2024)
 
 #### 🚀 Enhancement
