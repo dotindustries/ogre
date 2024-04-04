@@ -123,8 +123,10 @@ test("restore", async (t) => {
       "incorrect # of changelog entries",
     );
   });
+});
 
-  test("restoring from history", async (t) => {
+test("history", async (t) => {
+  t.test("successful restore", async (t) => {
     const [repo, obj] = await getBaseline();
     updateHeaderData(obj);
     await repo.commit("header data", testAuthor);
@@ -140,9 +142,51 @@ test("restore", async (t) => {
 
     t.matchOnly(obj, obj2, "restored object does not equal last version.");
   });
-});
 
-test("history", async (t) => {
+  t.test("remoteRefs doesn't change on commit", async (t) => {
+    const repo = new Repository<ComplexObject>({}, {});
+    updateHeaderData(repo.data);
+    await repo.commit("header data", testAuthor);
+
+    const history = repo.getHistory();
+
+    const r2 = new Repository<ComplexObject>({}, { history });
+    const remoteBeforeChange = r2.remote();
+
+    r2.data.name = "a different name";
+    await r2.commit("changed name", testAuthor);
+
+    const remoteAfterChange = r2.remote();
+
+    const history2 = r2.getHistory();
+
+    t.not(
+      remoteBeforeChange,
+      history.refs,
+      "input history refs and remote before change should not be the same object",
+    );
+    t.matchOnlyStrict(
+      remoteBeforeChange,
+      history.refs,
+      "remote before change is not the same as history input",
+    );
+    t.matchOnlyStrict(
+      remoteAfterChange,
+      remoteBeforeChange,
+      "remote before and after change are not the same",
+    );
+    t.notMatchOnlyStrict(
+      history2.refs,
+      remoteAfterChange,
+      "history refs must not be the same as static remotes",
+    );
+    t.notMatchOnlyStrict(
+      history.refs,
+      history2.refs,
+      "histories must not match anymore",
+    );
+  });
+
   t.test("history contains HEAD ref", async (t) => {
     const [repo] = await getBaseline();
 
@@ -161,10 +205,9 @@ test("history", async (t) => {
       () =>
         new Repository(co, {
           history: {
-            original: co,
             refs: new Map<string, Reference>(),
             commits: [],
-          } as History,
+          },
         }),
       {
         message: "unreachable: 'HEAD' is not present",

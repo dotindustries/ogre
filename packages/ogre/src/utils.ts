@@ -217,3 +217,24 @@ export const printChange = (chg: Operation) => {
  */
 export const getLastRefPathElement = (thePath: string) =>
   thePath.substring(thePath.lastIndexOf("/") + 1);
+
+export const immutableMapCopy = <T extends object>(
+  map: Map<string, T> | undefined,
+) => {
+  if (!map) {
+    return undefined;
+  }
+  const m = new Map<string, Readonly<T>>();
+  for (const [key, value] of map) {
+    m.set(key, { ...value });
+  }
+  return m as ReadonlyMap<string, Readonly<T>>;
+};
+
+export const mutableMapCopy = <T extends object>(map: Map<string, T>) => {
+  const m = new Map<string, T>();
+  for (const [key, value] of map) {
+    m.set(key, { ...value });
+  }
+  return m;
+};
