@@ -21,7 +21,7 @@ import {
   createHeadRefValue,
   getLastRefPathElement,
   headValueRefPrefix,
-  immutableRefCopy,
+  immutableMapCopy,
   localHeadPathPrefix,
   mapPath,
   mutableMapCopy,
@@ -109,7 +109,7 @@ export class Repository<T extends { [k: PropertyKey]: any }>
   constructor(obj: Partial<T>, options: RepositoryOptions<T>) {
     // FIXME: move this to refs/remote as git would do?
 
-    this.remoteRefs = immutableRefCopy(options.history?.refs);
+    this.remoteRefs = immutableMapCopy(options.history?.refs);
     this.original = deepClone(obj);
     // store js ref, so obj can still be modified without going through repo.data
     this.data = obj as T;
