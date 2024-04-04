@@ -1,3 +1,17 @@
+# v0.8.1 (Thu Apr 04 2024)
+
+#### 🐛 Bug Fix
+
+- fix: mutable remote refs [#171](https://github.com/dotindustries/ogre/pull/171) ([@nadilas](https://github.com/nadilas))
+- refactor: rename generic func ([@nadilas](https://github.com/nadilas))
+- fix: mutable remote refs ([@nadilas](https://github.com/nadilas))
+
+#### Authors: 1
+
+- [@nadilas](https://github.com/nadilas)
+
+---
+
 # v0.8.0 (Sat Mar 23 2024)
 
 #### 🚀 Enhancement
