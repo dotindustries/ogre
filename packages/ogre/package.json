@@ -12,6 +12,8 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "test": "nyc --reporter=lcov tap --coverage-report=none --allow-incomplete-coverage",
+    "test:cov": "tap",
+    "test:covhtml": "tap --coverage-report=lcov",
     "test:node": "node --import tsx --test src/**/*.test.ts",
     "coverage:html": "nyc report --reporter=html"
   },

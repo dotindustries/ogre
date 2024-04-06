@@ -10,9 +10,8 @@ import {
   testAuthor,
   updateHeaderData,
 } from "./test.utils";
-import { History, Reference } from "./interfaces";
-import { compare, Operation } from "fast-json-patch";
-import { printChange, printChangeLog } from "./utils";
+import { Reference } from "./interfaces";
+import { compare } from "fast-json-patch";
 
 test("diff is ok", async (t) => {
   const [repo, obj] = await getBaseline();
@@ -137,10 +136,14 @@ test("history", async (t) => {
     const history = repo.getHistory();
 
     const obj2 = {};
-    // @ts-ignore
     const repo2 = new Repository(obj2, { history });
 
-    t.matchOnly(obj, obj2, "restored object does not equal last version.");
+    t.matchOnlyStrict(
+      obj,
+      obj2,
+      "restored object does not equal last version.",
+    );
+    t.not(obj, obj2, "should not be the js ref");
   });
 
   t.test("remoteRefs doesn't change on commit", async (t) => {
@@ -371,5 +374,356 @@ test("apply", async (t) => {
     t.equal(dirtyState?.length, 2, "Status doesn't contain changes");
     t.match(dirtyState, patches, "It should have the right changes");
     t.match(repo.data, targetState, "The final state does not match up");
+  });
+});
+
+test("pending changes - push helpers", async (t) => {
+  t.test("1 commit & 1 ref update", async (t) => {
+    const [repo, obj] = await getBaseline();
+    updateHeaderData(obj);
+    await repo.commit("header data", testAuthor);
+    addOneNested(obj);
+    await repo.commit("first nested", testAuthor);
+    repo.tag("v0.1.0");
+    const history = repo.getHistory();
+
+    const repo2 = new Repository<ComplexObject>({}, { history });
+
+    repo2.data.description = "changed description";
+    const hash = await repo2.commit("changed desc", testAuthor);
+    const { commits } = repo2.getHistory();
+    const pendingCommit = commits.find((c) => c.hash === hash);
+
+    const pending = repo2.cherry();
+
+    t.equal(pending.commits.length, 1, "incorrect number of pending commits");
+    t.equal(pending.refs.size, 1, "incorrect number of pending ref updates");
+    t.matchOnly(pending.commits[0], pendingCommit, "wrong pending commit");
+    t.matchOnlyStrict(
+      Array.from(pending.refs.keys()),
+      ["refs/heads/main"],
+      "wrong pending ref update",
+    );
+  });
+
+  t.test("2 commit & 1 ref update", async (t) => {
+    const [repo, obj] = await getBaseline();
+    updateHeaderData(obj);
+    await repo.commit("header data", testAuthor);
+    addOneNested(obj);
+    await repo.commit("first nested", testAuthor);
+    repo.tag("v0.1.0");
+    const history = repo.getHistory();
+
+    const repo2 = new Repository<ComplexObject>({}, { history });
+
+    repo2.data.description = "changed description";
+    const hash1 = await repo2.commit("changed desc", testAuthor);
+    repo2.data.uuid = "uuid1";
+    const hash2 = await repo2.commit("changed uuid", testAuthor);
+
+    const { commits } = repo2.getHistory();
+    const pendingCommit1 = commits.find((c) => c.hash === hash1);
+    const pendingCommit2 = commits.find((c) => c.hash === hash2);
+
+    const pending = repo2.cherry();
+
+    t.equal(pending.commits.length, 2, "incorrect number of pending commits");
+    t.equal(pending.refs.size, 1, "incorrect number of pending ref updates");
+    t.matchOnlyStrict(
+      new Set(pending.commits),
+      new Set([pendingCommit2, pendingCommit1]),
+      "wrong pending commits",
+    );
+    t.matchOnlyStrict(
+      Array.from(pending.refs.keys()),
+      ["refs/heads/main"],
+      "wrong pending ref update",
+    );
+  });
+
+  t.test("1 commit & 2 ref updates", async (t) => {
+    const [repo, obj] = await getBaseline();
+    updateHeaderData(obj);
+    await repo.commit("header data", testAuthor);
+    addOneNested(obj);
+    await repo.commit("first nested", testAuthor);
+    repo.tag("v0.1.0");
+    const history = repo.getHistory();
+
+    const repo2 = new Repository<ComplexObject>({}, { history });
+
+    repo2.data.description = "changed description";
+    const hash1 = await repo2.commit("changed desc", testAuthor);
+    repo2.createBranch("branch2");
+
+    const { commits } = repo2.getHistory();
+    const pendingCommit1 = commits.find((c) => c.hash === hash1);
+
+    const pending = repo2.cherry();
+
+    t.equal(pending.commits.length, 1, "incorrect number of pending commits");
+    t.equal(pending.refs.size, 2, "incorrect number of pending ref updates");
+    t.matchOnlyStrict(
+      pending.commits,
+      [pendingCommit1],
+      "wrong pending commits",
+    );
+    t.matchOnlyStrict(
+      new Set(pending.refs.keys()),
+      new Set(["refs/heads/main", "refs/heads/branch2"]),
+      "wrong pending ref update",
+    );
+  });
+
+  t.test("2 commit & 2 ref updates", async (t) => {
+    const [repo, obj] = await getBaseline();
+    updateHeaderData(obj);
+    await repo.commit("header data", testAuthor);
+    addOneNested(obj);
+    await repo.commit("first nested", testAuthor);
+    repo.tag("v0.1.0");
+    const history = repo.getHistory();
+
+    const repo2 = new Repository<ComplexObject>({}, { history });
+
+    repo2.data.description = "changed description";
+    const hash1 = await repo2.commit("changed desc", testAuthor);
+    repo2.data.uuid = "uuid1";
+    const hash2 = await repo2.commit("changed uuid", testAuthor);
+    repo2.checkout("branch2", true);
+
+    const { commits } = repo2.getHistory();
+    const pendingCommit1 = commits.find((c) => c.hash === hash1);
+    const pendingCommit2 = commits.find((c) => c.hash === hash2);
+
+    const pending = repo2.cherry();
+
+    t.equal(pending.commits.length, 2, "incorrect number of pending commits");
+    t.equal(pending.refs.size, 2, "incorrect number of pending ref updates");
+    t.matchOnlyStrict(
+      new Set(pending.commits),
+      new Set([pendingCommit2, pendingCommit1]),
+      "wrong pending commits",
+    );
+    t.matchOnlyStrict(
+      new Set(pending.refs.keys()),
+      new Set(["refs/heads/main", "refs/heads/branch2"]),
+      "wrong pending ref update",
+    );
+  });
+
+  t.test("3 commit & 2 ref updates", async (t) => {
+    const [repo, obj] = await getBaseline();
+    updateHeaderData(obj);
+    await repo.commit("header data", testAuthor);
+    addOneNested(obj);
+    await repo.commit("first nested", testAuthor);
+    repo.tag("v0.1.0");
+    const history = repo.getHistory();
+
+    const repo2 = new Repository<ComplexObject>({}, { history });
+
+    repo2.data.description = "changed description";
+    const hash1 = await repo2.commit("changed desc", testAuthor);
+    repo2.data.uuid = "uuid1";
+    const hash2 = await repo2.commit("changed uuid", testAuthor);
+    repo2.checkout("branch2", true);
+
+    repo2.data.nested = [{ name: "a", uuid: "thing" }];
+    const hash3 = await repo2.commit("added a thing", testAuthor);
+
+    const { commits } = repo2.getHistory();
+    const pendingCommit1 = commits.find((c) => c.hash === hash1);
+    const pendingCommit2 = commits.find((c) => c.hash === hash2);
+    const pendingCommit3 = commits.find((c) => c.hash === hash3);
+
+    const pending = repo2.cherry();
+
+    t.equal(pending.commits.length, 3, "incorrect number of pending commits");
+    t.equal(pending.refs.size, 2, "incorrect number of pending ref updates");
+    t.matchOnlyStrict(
+      new Set(pending.commits),
+      new Set([pendingCommit3, pendingCommit2, pendingCommit1]),
+      "wrong pending commits",
+    );
+    t.matchOnlyStrict(
+      new Set(pending.refs.keys()),
+      new Set(["refs/heads/main", "refs/heads/branch2"]),
+      "wrong pending ref update",
+    );
+  });
+
+  t.test("3 commit & 3 ref updates", async (t) => {
+    const [repo, obj] = await getBaseline();
+    updateHeaderData(obj);
+    await repo.commit("header data", testAuthor);
+    addOneNested(obj);
+    await repo.commit("first nested", testAuthor);
+    repo.tag("v0.1.0");
+    const history = repo.getHistory();
+
+    const repo2 = new Repository<ComplexObject>({}, { history });
+
+    repo2.data.description = "changed description";
+    const hash1 = await repo2.commit("changed desc", testAuthor);
+    repo2.data.uuid = "uuid1";
+    const hash2 = await repo2.commit("changed uuid", testAuthor);
+    repo2.checkout("branch2", true);
+
+    repo2.data.nested = [{ name: "a", uuid: "thing" }];
+    const hash3 = await repo2.commit("added a thing", testAuthor);
+    repo2.tag("v0.2.0");
+
+    const { commits } = repo2.getHistory();
+    const pendingCommit1 = commits.find((c) => c.hash === hash1);
+    const pendingCommit2 = commits.find((c) => c.hash === hash2);
+    const pendingCommit3 = commits.find((c) => c.hash === hash3);
+
+    const pending = repo2.cherry();
+
+    t.equal(pending.commits.length, 3, "incorrect number of pending commits");
+    t.equal(pending.refs.size, 3, "incorrect number of pending ref updates");
+    t.matchOnlyStrict(
+      new Set(pending.commits),
+      new Set([pendingCommit3, pendingCommit2, pendingCommit1]),
+      "wrong pending commits",
+    );
+    t.matchOnlyStrict(
+      new Set(pending.refs.keys()),
+      new Set(["refs/heads/main", "refs/heads/branch2", "refs/tags/v0.2.0"]),
+      "wrong pending ref update",
+    );
+  });
+
+  t.test("after merge 1 commit & 3 ref updates", async (t) => {
+    const [repo, obj] = await getBaseline();
+    updateHeaderData(obj);
+    await repo.commit("header data", testAuthor);
+    addOneNested(obj);
+    await repo.commit("first nested", testAuthor);
+    repo.tag("v0.1.0");
+    const history = repo.getHistory();
+
+    const repo2 = new Repository<ComplexObject>({}, { history });
+    repo2.checkout("branch2", true);
+
+    repo2.data.nested = [{ name: "a", uuid: "thing" }];
+    const hash3 = await repo2.commit("added a thing", testAuthor);
+    repo2.tag("v0.2.0");
+
+    repo2.checkout("main");
+    repo2.merge("branch2");
+
+    const { commits } = repo2.getHistory();
+    const pendingCommit3 = commits.find((c) => c.hash === hash3);
+
+    const pending = repo2.cherry();
+
+    t.equal(pending.commits.length, 1, "incorrect number of pending commits");
+    t.equal(pending.refs.size, 3, "incorrect number of pending ref updates");
+    t.matchOnlyStrict(
+      pending.commits,
+      [pendingCommit3],
+      "wrong pending commits",
+    );
+    t.matchOnlyStrict(
+      new Set(pending.refs.keys()),
+      new Set(["refs/heads/main", "refs/heads/branch2", "refs/tags/v0.2.0"]),
+      "wrong pending ref update",
+    );
+  });
+
+  t.test("after merge 1 commit & 2 ref updates", async (t) => {
+    const [repo, obj] = await getBaseline();
+    updateHeaderData(obj);
+    await repo.commit("header data", testAuthor);
+    addOneNested(obj);
+    await repo.commit("first nested", testAuthor);
+    repo.tag("v0.1.0");
+    const history = repo.getHistory();
+
+    const repo2 = new Repository<ComplexObject>({}, { history });
+    repo2.checkout("branch2", true);
+
+    repo2.data.nested = [{ name: "a", uuid: "thing" }];
+    const hash3 = await repo2.commit("added a thing", testAuthor);
+
+    repo2.checkout("main");
+    repo2.merge("branch2");
+
+    const { commits } = repo2.getHistory();
+    const pendingCommit3 = commits.find((c) => c.hash === hash3);
+
+    const pending = repo2.cherry();
+
+    t.equal(pending.commits.length, 1, "incorrect number of pending commits");
+    t.equal(pending.refs.size, 2, "incorrect number of pending ref updates");
+    t.matchOnlyStrict(
+      pending.commits,
+      [pendingCommit3],
+      "wrong pending commits",
+    );
+    t.matchOnlyStrict(
+      new Set(pending.refs.keys()),
+      new Set(["refs/heads/main", "refs/heads/branch2"]),
+      "wrong pending ref update",
+    );
+  });
+  t.test("no merge 1 commit & 1 ref updates", async (t) => {
+    const [repo, obj] = await getBaseline();
+    updateHeaderData(obj);
+    await repo.commit("header data", testAuthor);
+    addOneNested(obj);
+    await repo.commit("first nested", testAuthor);
+    repo.tag("v0.1.0");
+    const history = repo.getHistory();
+
+    const repo2 = new Repository<ComplexObject>({}, { history });
+    repo2.checkout("branch2", true);
+
+    repo2.data.nested = [{ name: "a", uuid: "thing" }];
+    const hash3 = await repo2.commit("added a thing", testAuthor);
+
+    const { commits } = repo2.getHistory();
+    const pendingCommit3 = commits.find((c) => c.hash === hash3);
+
+    const pending = repo2.cherry();
+
+    t.equal(pending.commits.length, 1, "incorrect number of pending commits");
+    t.equal(pending.refs.size, 1, "incorrect number of pending ref updates");
+    t.matchOnlyStrict(
+      pending.commits,
+      [pendingCommit3],
+      "wrong pending commits",
+    );
+    t.matchOnlyStrict(
+      pending.refs.keys(),
+      ["refs/heads/branch2"],
+      "wrong pending ref update",
+    );
+  });
+  t.test("no merge no commit & 1 ref updates", async (t) => {
+    const [repo, obj] = await getBaseline();
+    updateHeaderData(obj);
+    await repo.commit("header data", testAuthor);
+    addOneNested(obj);
+    await repo.commit("first nested", testAuthor);
+    repo.tag("v0.1.0");
+    const history = repo.getHistory();
+
+    const repo2 = new Repository<ComplexObject>({}, { history });
+    repo2.checkout("branch2", true);
+
+    const pending = repo2.cherry();
+
+    t.equal(pending.commits.length, 0, "incorrect number of pending commits");
+    t.equal(pending.refs.size, 1, "incorrect number of pending ref updates");
+    t.matchOnlyStrict(pending.commits, [], "wrong pending commits");
+    t.matchOnlyStrict(
+      pending.refs.keys(),
+      ["refs/heads/branch2"],
+      "wrong pending ref update",
+    );
   });
 });

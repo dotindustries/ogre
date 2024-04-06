@@ -3,7 +3,7 @@ import { Commit } from "./commit";
 import { Reference } from "./interfaces";
 import { decompressSync, strFromU8 } from "fflate";
 import { validBranch, validRef } from "./ref";
-import { Operation } from "fast-json-patch";
+import { deepClone, Operation } from "fast-json-patch";
 import { RepositoryObject } from "./repository";
 
 const emailRegex =
@@ -51,19 +51,40 @@ export const REFS_MAIN_KEY = `${localHeadPathPrefix()}main`;
 export const treeToObject = <T = any>(tree: string): T => {
   return JSON.parse(strFromU8(decompressSync(Buffer.from(tree, "base64"))));
 };
+
+/**
+ * Maps the path from a commit to another commit.
+ * It travels backwards through parent relationships until the root state.
+ * It returns a boolean whether the to commit parameter is a direct ancestor
+ * of the from commit and returns the path of commits between them.
+ *
+ * @param commits
+ * @param from the higher commit to start from
+ * @param to to lower commit to arrive at
+ */
 export const mapPath = (
+  commits: Array<Commit>,
   from: Commit,
-  to: Commit,
-  commits: Commit[],
-): [isAncestor: boolean] => {
-  let c: Commit | undefined = to;
-  while (c !== undefined) {
-    c = commits.find((parent) => parent.hash === c?.parent);
-    if (c?.hash === from.hash) {
-      return [true];
+  to?: Commit,
+): [isAncestor: boolean, path: Array<Commit>] => {
+  // early exit for first commit
+  if (from.parent === undefined && to === undefined) return [true, [from]];
+
+  const path: Array<Commit> = [];
+  let parent: Commit | undefined = from;
+  while (parent !== undefined) {
+    const child = parent;
+    parent = commits.find((gp) => gp.hash === parent?.parent);
+    const atTarget = parent?.hash === to?.hash;
+
+    path.push(child);
+
+    if (atTarget) {
+      if (parent) path.push(parent);
+      return [true, path];
     }
   }
-  return [false];
+  return [false, []];
 };
 /**
  * Returns the commit to which the provided ref is pointing
@@ -237,4 +258,21 @@ export const mutableMapCopy = <T extends object>(map: Map<string, T>) => {
     m.set(key, { ...value });
   }
   return m;
+};
+
+export const immutableArrayCopy = <T, R extends any>(
+  arr: Array<T> | undefined,
+  fn: (obj: T) => Readonly<R> = (o) =>
+    typeof o === "object" ? deepClone(o) : o,
+) => {
+  if (!arr) {
+    return undefined;
+  }
+  const a: Array<Readonly<R>> = [];
+  for (let i = 0; i < arr.length; i++) {
+    const o = arr[i];
+    a.push(fn(o));
+  }
+
+  return a as ReadonlyArray<Readonly<R>>;
 };
