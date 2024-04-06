@@ -1,3 +1,20 @@
+# v0.9.0 (Sat Apr 06 2024)
+
+#### 🚀 Enhancement
+
+- feat: git cherry [#172](https://github.com/dotindustries/ogre/pull/172) ([@nadilas](https://github.com/nadilas))
+- feat: cherry for pending changes ([@nadilas](https://github.com/nadilas))
+
+#### 🐛 Bug Fix
+
+- refactor: array type syntax ([@nadilas](https://github.com/nadilas))
+
+#### Authors: 1
+
+- [@nadilas](https://github.com/nadilas)
+
+---
+
 # v0.8.1 (Thu Apr 04 2024)
 
 #### 🐛 Bug Fix

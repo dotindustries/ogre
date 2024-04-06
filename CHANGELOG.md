@@ -1,3 +1,16 @@
+# (Sat Apr 06 2024)
+
+#### 🚀 Enhancement
+
+- `@dotinc/ogre@0.9.0`
+  - feat: git cherry [#172](https://github.com/dotindustries/ogre/pull/172) ([@nadilas](https://github.com/nadilas))
+
+#### Authors: 1
+
+- [@nadilas](https://github.com/nadilas)
+
+---
+
 # (Thu Apr 04 2024)
 
 #### 🐛 Bug Fix
