@@ -2,13 +2,13 @@ import { digest } from "./hash";
 import { Operation } from "fast-json-patch";
 
 export interface Commit {
-  /*The hash of the commit. Is an sha256 of:
-          - tree object reference (changes?)
-          - parent object reference (parent hash)
-          - author
-          - author commit timestamp with timezone
-          - commit message
-        */
+  /*The hash of the commit. Is a sha256 of:
+                - tree object reference (changes?)
+                - parent object reference (parent hash)
+                - author
+                - author commit timestamp with timezone
+                - commit message
+              */
   hash: string;
   tree: string;
 
@@ -19,7 +19,7 @@ export interface Commit {
   parent: string | undefined;
 
   // The diff of this commit from the parent
-  changes: Operation[];
+  changes: Array<Operation>;
 
   // Commit timestamp with timezone
   timestamp: Date;
@@ -29,7 +29,7 @@ export interface CommitHashContent {
   message: string;
   author: string;
   parentRef: string | undefined;
-  changes: Operation[];
+  changes: Array<Operation>;
   timestamp: Date;
 }
 

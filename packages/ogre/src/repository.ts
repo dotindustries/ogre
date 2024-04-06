@@ -50,18 +50,18 @@ export interface RepositoryObject<T extends { [k: string]: any }> {
    * @param shaishFrom expression (e.g. refs (branches, tags), commitSha)
    * @param shaishTo expression (e.g. refs (branches, tags), commitSha)
    */
-  diff(shaishFrom: string, shaishTo?: string): Operation[];
+  diff(shaishFrom: string, shaishTo?: string): Array<Operation>;
 
   /**
    * Returns pending changes.
    */
-  status(): Operation[];
+  status(): Array<Operation>;
 
   /**
    * Applies a patch to the repository's HEAD
    * @param patch
    */
-  apply(patch: Operation[]): void;
+  apply(patch: Array<Operation>): void;
 
   // It returns the reference where we are currently at
   head(): string;
@@ -73,7 +73,7 @@ export interface RepositoryObject<T extends { [k: string]: any }> {
 
   checkout(shaish: string, createBranch?: boolean): void;
 
-  logs(commits?: number): Commit[];
+  logs(commits?: number): Array<Commit>;
 
   createBranch(name: string): string;
 
@@ -149,7 +149,7 @@ export class Repository<T extends { [k: PropertyKey]: any }>
   private observer: Observer<T>;
 
   private readonly refs: Map<string, Reference>;
-  private readonly commits: Commit[];
+  private readonly commits: Array<Commit>;
 
   remote(): ReadonlyMap<string, Readonly<Reference>> | undefined {
     return this.remoteRefs;
@@ -166,8 +166,8 @@ export class Repository<T extends { [k: PropertyKey]: any }>
     this.observer = observe(this.data);
   }
 
-  apply(patch: Operation[]): JsonPatchError | undefined {
-    const p = deepClone(patch) as Operation[];
+  apply(patch: Array<Operation>): JsonPatchError | undefined {
+    const p = deepClone(patch) as Array<Operation>;
     const err = validate(p, this.data);
     if (err) {
       // credit goes to @NicBright
@@ -247,7 +247,7 @@ export class Repository<T extends { [k: PropertyKey]: any }>
     return this.diff(commit.hash);
   }
 
-  diff(shaishFrom: string, shaishTo?: string): Operation[] {
+  diff(shaishFrom: string, shaishTo?: string): Array<Operation> {
     const [cFrom] = shaishToCommit(shaishFrom, this.refs, this.commits);
     let target: T;
     if (shaishTo) {
@@ -393,7 +393,7 @@ export class Repository<T extends { [k: PropertyKey]: any }>
     }
     // traverse backwards and build commit tree
     let c: Commit | undefined = commit;
-    let commitsList: Commit[] = [];
+    let commitsList: Array<Commit> = [];
     while (c !== undefined) {
       commitsList = [c, ...commitsList];
       c = this.commits.find((parent) => parent.hash === c?.parent);
@@ -408,8 +408,8 @@ export class Repository<T extends { [k: PropertyKey]: any }>
     };
   }
 
-  logs(numberOfCommits?: number): Commit[] {
-    const logs: Commit[] = [];
+  logs(numberOfCommits?: number): Array<Commit> {
+    const logs: Array<Commit> = [];
     const limit = numberOfCommits ?? -1;
     let c = this.commitAtHead();
     let counter = 0;
