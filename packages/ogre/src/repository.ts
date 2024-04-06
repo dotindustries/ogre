@@ -21,6 +21,7 @@ import {
   createHeadRefValue,
   getLastRefPathElement,
   headValueRefPrefix,
+  immutableArrayCopy,
   immutableMapCopy,
   localHeadPathPrefix,
   mapPath,
@@ -50,18 +51,18 @@ export interface RepositoryObject<T extends { [k: string]: any }> {
    * @param shaishFrom expression (e.g. refs (branches, tags), commitSha)
    * @param shaishTo expression (e.g. refs (branches, tags), commitSha)
    */
-  diff(shaishFrom: string, shaishTo?: string): Operation[];
+  diff(shaishFrom: string, shaishTo?: string): Array<Operation>;
 
   /**
    * Returns pending changes.
    */
-  status(): Operation[];
+  status(): Array<Operation>;
 
   /**
    * Applies a patch to the repository's HEAD
    * @param patch
    */
-  apply(patch: Operation[]): void;
+  apply(patch: Array<Operation>): void;
 
   // It returns the reference where we are currently at
   head(): string;
@@ -73,7 +74,7 @@ export interface RepositoryObject<T extends { [k: string]: any }> {
 
   checkout(shaish: string, createBranch?: boolean): void;
 
-  logs(commits?: number): Commit[];
+  logs(commits?: number): Array<Commit>;
 
   createBranch(name: string): string;
 
@@ -98,6 +99,11 @@ export interface RepositoryObject<T extends { [k: string]: any }> {
    * The returned map is a readonly of remote.
    */
   remote(): ReadonlyMap<string, Readonly<Reference>> | undefined;
+
+  /**
+   * Cherry returns the commits that are missing from upstream and the refs that have been moved since remote
+   */
+  cherry(): { commits: Array<Commit>; refs: Map<string, Reference> };
 }
 
 /**
@@ -108,8 +114,11 @@ export class Repository<T extends { [k: PropertyKey]: any }>
 {
   constructor(obj: Partial<T>, options: RepositoryOptions<T>) {
     // FIXME: move this to refs/remote as git would do?
-
     this.remoteRefs = immutableMapCopy(options.history?.refs);
+    this.remoteCommits = immutableArrayCopy<Commit, string>(
+      options.history?.commits,
+      (c) => c.hash,
+    );
     this.original = deepClone(obj);
     // store js ref, so obj can still be modified without going through repo.data
     this.data = obj as T;
@@ -146,10 +155,106 @@ export class Repository<T extends { [k: PropertyKey]: any }>
     | ReadonlyMap<string, Readonly<Reference>>
     | undefined;
 
+  // stores the remote state upon initialization
+  private readonly remoteCommits: ReadonlyArray<Readonly<string>> | undefined;
+
   private observer: Observer<T>;
 
   private readonly refs: Map<string, Reference>;
-  private readonly commits: Commit[];
+  private readonly commits: Array<Commit>;
+
+  cherry(): { commits: Array<Commit>; refs: Map<string, Reference> } {
+    const commits: Array<Commit> = [];
+    const refs = new Map<string, Reference>();
+
+    const collectedHashes: Array<string> = [];
+    const shouldExclude = (hash: string) =>
+      this.remoteCommits?.includes(hash) || collectedHashes.includes(hash);
+    const collect = (c: Commit) => {
+      // we can't include remote state in the pending report
+      if (shouldExclude(c.hash)) {
+        return false;
+      }
+      commits.push(c);
+      collectedHashes.push(c.hash);
+      return true;
+    };
+    // collect ref updates and commits that are not present on the remote
+    for (const [key, ref] of this.refs) {
+      if (key === REFS_HEAD_KEY) {
+        continue;
+      }
+      const remote = this.remoteRefs?.get(key);
+      if (!remote) {
+        // if we have no remote pair, we need to sync the ref
+        refs.set(key, ref);
+        const localCommit = this.commits.find((c) => c.hash === ref.value);
+        // if ref is not pointing to a commit move on
+        if (!localCommit) {
+          continue;
+        }
+        // map all commits to root
+        const [isAncestor, path] = mapPath(
+          this.commits,
+          localCommit,
+          undefined,
+        );
+
+        if (isAncestor) {
+          for (let i = 0; i < path.length; i++) {
+            const commit = path[i];
+            collect({
+              hash: commit.hash,
+              author: commit.author,
+              changes: commit.changes,
+              message: commit.message,
+              parent: commit.parent,
+              timestamp: commit.timestamp,
+              tree: commit.tree,
+            });
+          }
+        }
+        continue;
+      }
+
+      if (remote.value === ref.value) {
+        // early exit if remote is the same
+        continue;
+      }
+
+      // local and remote refs differ
+      refs.set(key, ref);
+      const localCommit = this.commits.find((c) => c.hash === ref.value);
+      // if ref is not pointing to a commit move on
+      if (!localCommit) {
+        continue;
+      }
+      // FIXME: do we have to have the remote ref as a commit locally?
+      const remoteCommit = this.commits.find((c) => c.hash === remote.value)!;
+      const [isAncestor, path] = mapPath(
+        this.commits,
+        localCommit,
+        remoteCommit,
+      );
+
+      if (isAncestor) {
+        for (let i = 0; i < path.length; i++) {
+          const commit = path[i];
+          collect({
+            hash: commit.hash,
+            author: commit.author,
+            changes: commit.changes,
+            message: commit.message,
+            parent: commit.parent,
+            timestamp: commit.timestamp,
+            tree: commit.tree,
+          });
+        }
+      }
+    }
+
+    return { commits, refs };
+  }
 
   remote(): ReadonlyMap<string, Readonly<Reference>> | undefined {
     return this.remoteRefs;
@@ -166,8 +271,8 @@ export class Repository<T extends { [k: PropertyKey]: any }>
     this.observer = observe(this.data);
   }
 
-  apply(patch: Operation[]): JsonPatchError | undefined {
-    const p = deepClone(patch) as Operation[];
+  apply(patch: Array<Operation>): JsonPatchError | undefined {
+    const p = deepClone(patch) as Array<Operation>;
     const err = validate(p, this.data);
     if (err) {
       // credit goes to @NicBright
@@ -247,7 +352,7 @@ export class Repository<T extends { [k: PropertyKey]: any }>
     return this.diff(commit.hash);
   }
 
-  diff(shaishFrom: string, shaishTo?: string): Operation[] {
+  diff(shaishFrom: string, shaishTo?: string): Array<Operation> {
     const [cFrom] = shaishToCommit(shaishFrom, this.refs, this.commits);
     let target: T;
     if (shaishTo) {
@@ -393,7 +498,7 @@ export class Repository<T extends { [k: PropertyKey]: any }>
     }
     // traverse backwards and build commit tree
     let c: Commit | undefined = commit;
-    let commitsList: Commit[] = [];
+    let commitsList: Array<Commit> = [];
     while (c !== undefined) {
       commitsList = [c, ...commitsList];
       c = this.commits.find((parent) => parent.hash === c?.parent);
@@ -408,8 +513,8 @@ export class Repository<T extends { [k: PropertyKey]: any }>
     };
   }
 
-  logs(numberOfCommits?: number): Commit[] {
-    const logs: Commit[] = [];
+  logs(numberOfCommits?: number): Array<Commit> {
+    const logs: Array<Commit> = [];
     const limit = numberOfCommits ?? -1;
     let c = this.commitAtHead();
     let counter = 0;
@@ -458,7 +563,7 @@ export class Repository<T extends { [k: PropertyKey]: any }>
     // *---*
     //      \
     //       *---*---* (master, foo)
-    const [isAncestor] = mapPath(headCommit, srcCommit, this.commits);
+    const [isAncestor] = mapPath(this.commits, srcCommit, headCommit);
     if (isAncestor) {
       this.moveRef(this.head(), srcCommit);
       this.moveTo(srcCommit);
