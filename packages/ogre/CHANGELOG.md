@@ -1,3 +1,19 @@
+# v0.10.0 (Sun Apr 07 2024)
+
+#### 🚀 Enhancement
+
+- feat: allow override for gitgraphjs options [#173](https://github.com/dotindustries/ogre/pull/173) ([@nadilas](https://github.com/nadilas))
+
+#### 🐛 Bug Fix
+
+- chore: upgrade type defs ([@nadilas](https://github.com/nadilas))
+
+#### Authors: 1
+
+- [@nadilas](https://github.com/nadilas)
+
+---
+
 # v0.9.0 (Sat Apr 06 2024)
 
 #### 🚀 Enhancement

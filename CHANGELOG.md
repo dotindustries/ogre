@@ -1,3 +1,16 @@
+# (Sun Apr 07 2024)
+
+#### 🚀 Enhancement
+
+- `@dotinc/ogre-react@0.10.0`, `@dotinc/ogre@0.10.0`
+  - feat: allow override for gitgraphjs options [#173](https://github.com/dotindustries/ogre/pull/173) ([@nadilas](https://github.com/nadilas))
+
+#### Authors: 1
+
+- [@nadilas](https://github.com/nadilas)
+
+---
+
 # (Sat Apr 06 2024)
 
 #### 🚀 Enhancement
