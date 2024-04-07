@@ -9,7 +9,7 @@
     "url": "https://github.com/dotindustries/ogre.git"
   },
   "dependencies": {
-    "@dotinc/ogre": "^0.9.0",
+    "@dotinc/ogre": "*",
     "@gitgraph/react": "^1.6.0"
   },
   "devDependencies": {
@@ -17,7 +17,7 @@
     "@types/react-dom": "^17.0.13",
     "config": "^0.2.0",
     "tsconfig": "^0.1.1",
-    "typescript": "^4.7.4"
+    "typescript": "^5.4.4"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
