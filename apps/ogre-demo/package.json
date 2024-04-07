@@ -9,8 +9,8 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@dotinc/ogre": "^0.9.0",
-    "@dotinc/ogre-react": "^0.9.0",
+    "@dotinc/ogre": "*",
+    "@dotinc/ogre-react": "*",
     "next": "12.1.0",
     "next-plausible": "^3.12.0",
     "next-transpile-modules": "^9.1.0",
@@ -20,12 +20,12 @@
     "react-live": "3.2.0"
   },
   "devDependencies": {
-    "@types/node": "17.0.45",
+    "@types/node": "^20.12.5",
     "@types/react": "17.0.39",
     "config": "^0.2.0",
     "eslint": "8.56.0",
     "eslint-config-next": "12.3.4",
     "tsconfig": "*",
-    "typescript": "4.7.4"
+    "typescript": "^5.4.4"
   }
 }

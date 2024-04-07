@@ -79,7 +79,7 @@ const Home: NextPage = () => {
             <LivePreview
               style={{
                 borderRadius: `${polished.rem(0)} ${polished.rem(
-                  5
+                  5,
                 )} ${polished.rem(5)} ${polished.rem(0)}`,
                 position: "relative",
                 padding: "0.5rem",
@@ -120,11 +120,11 @@ const code = `
   const [repository, setRepository] = useState(undefined)
   useEffect(() => {
     if (!repository) {
-      setupRepo()
+      setupRepo().then(r => setRepository(r))
     }
     return () => setRepository(undefined)
   }, [])
-
+  
   const setupRepo = async () => {
     let author = 'author <author@email.info>'
     const r = new Repository({description: '', name: ''}, {})
@@ -147,8 +147,8 @@ const code = `
     r.checkout('main')
     r.merge('description')
 
-    setRepository(r)
+    return r
   }
-
+  
   return repository ? <OgreGraph repository={repository} /> : null
 }`;
