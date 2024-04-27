@@ -24,13 +24,13 @@
 export function digest(
   obj: any,
   algorithm = "SHA-256",
-  isBrowser = false
+  isBrowser = false,
 ): Promise<string> {
   // eslint-disable-line
   const algorithms = ["SHA-1", "SHA-256", "SHA-384", "SHA-512"];
   if (!algorithms.includes(algorithm)) {
     throw RangeError(
-      `Valid hash algorithm values are any of ${JSON.stringify(algorithms)}`
+      `Valid hash algorithm values are any of ${JSON.stringify(algorithms)}`,
     );
   }
   return (async function (obj, algorithm) {
@@ -46,7 +46,7 @@ export function digest(
       });
     } else {
       const nodeAlg = algorithm.toLowerCase().replace("-", "");
-      digest = require("crypto")
+      digest = (await import("crypto"))
         .createHash(nodeAlg)
         .update(Buffer.from(hashInput))
         .digest("hex"); // eslint-disable-line
