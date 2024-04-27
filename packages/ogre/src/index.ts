@@ -6,4 +6,9 @@ export * from "./size.js";
 export * from "./utils.js";
 export * from "./git2json.js";
 
-export { compare, deepClone, Operation, JsonPatchError } from "fast-json-patch";
+export {
+  compare,
+  deepClone,
+  Operation,
+  JsonPatchError,
+} from "fast-json-patch/index.mjs";

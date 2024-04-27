@@ -3,7 +3,7 @@ import { Commit } from "./commit.js";
 import { Reference } from "./interfaces.js";
 import { decompressSync, strFromU8 } from "fflate";
 import { validBranch, validRef } from "./ref.js";
-import { deepClone, Operation } from "fast-json-patch";
+import { deepClone, Operation } from "fast-json-patch/index.mjs";
 import { RepositoryObject } from "./repository.js";
 
 const emailRegex =

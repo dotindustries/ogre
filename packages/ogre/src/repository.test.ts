@@ -11,7 +11,7 @@ import {
   updateHeaderData,
 } from "./test.utils.js";
 import { Reference } from "./interfaces.js";
-import { compare } from "fast-json-patch";
+import { compare } from "fast-json-patch/index.mjs";
 
 test("diff is ok", async (t) => {
   const [repo, obj] = await getBaseline();
