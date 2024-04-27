@@ -1,5 +1,5 @@
 import { test } from "tap";
-import { getBaseline, testAuthor } from "./test.utils";
+import { getBaseline, testAuthor } from "./test.utils.js";
 
 test("cannot tag on an empty repo", async (t) => {
   const [repo] = await getBaseline();

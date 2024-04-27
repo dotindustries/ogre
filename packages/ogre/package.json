@@ -9,6 +9,7 @@
   "private": false,
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
+  "type": "module",
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "test": "nyc --reporter=lcov tap --coverage-report=none --allow-incomplete-coverage",
@@ -22,7 +23,6 @@
   "dependencies": {
     "fast-json-patch": "^3.1.1",
     "fflate": "^0.8.2",
-    "immutable-json-patch": "^6.0.1",
     "tslib": "^2.6.2"
   },
   "devDependencies": {

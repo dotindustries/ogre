@@ -1,11 +1,11 @@
-import { Commit } from "./commit";
-import { History, Reference } from "./interfaces";
+import { Commit } from "./commit.js";
+import { History, Reference } from "./interfaces.js";
 import {
   cleanAuthor,
   createHeadRefValue,
   isTagRef,
   REFS_HEAD_KEY,
-} from "./utils";
+} from "./utils.js";
 
 const findRefs = (commit: Commit, refs: Map<string, Reference>) => {
   const list = [];

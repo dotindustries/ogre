@@ -1,8 +1,9 @@
 {
   "compilerOptions": {
+    "moduleResolution": "nodenext",
     "declaration": true,
     "importHelpers": true,
-    "module": "commonjs",
+    "module": "NodeNext",
     "outDir": "./lib",
     "rootDir": "./src",
     "strict": true,
@@ -12,5 +13,8 @@
   "include": [
     "./src/**/*.ts"
   ],
-  "exclude": ["lib", "node_modules"]
+  "exclude": [
+    "lib",
+    "node_modules"
+  ]
 }

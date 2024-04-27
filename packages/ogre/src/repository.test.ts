@@ -1,6 +1,6 @@
 import { test } from "tap";
 
-import { Repository } from "./repository";
+import { Repository } from "./repository.js";
 import {
   addOneStep,
   addOneStep as addOneNested,
@@ -9,8 +9,8 @@ import {
   sumChanges,
   testAuthor,
   updateHeaderData,
-} from "./test.utils";
-import { Reference } from "./interfaces";
+} from "./test.utils.js";
+import { Reference } from "./interfaces.js";
 import { compare } from "fast-json-patch";
 
 test("diff is ok", async (t) => {
