@@ -1,3 +1,16 @@
+# (Sat Apr 27 2024)
+
+#### 🐛 Bug Fix
+
+- `@dotinc/ogre@0.10.1`
+  - fix: fast-json-patch commonjs import is wrong [#175](https://github.com/dotindustries/ogre/pull/175) ([@nadilas](https://github.com/nadilas))
+
+#### Authors: 1
+
+- [@nadilas](https://github.com/nadilas)
+
+---
+
 # (Sun Apr 07 2024)
 
 #### 🚀 Enhancement

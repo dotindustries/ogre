@@ -1,3 +1,21 @@
+# v0.10.1 (Sat Apr 27 2024)
+
+#### 🐛 Bug Fix
+
+- fix: fast-json-patch commonjs import is wrong [#175](https://github.com/dotindustries/ogre/pull/175) ([@nadilas](https://github.com/nadilas))
+- chore: apply patch to fast-json-patch ([@nadilas](https://github.com/nadilas))
+- chore: move node to dynamic import in esm ([@nadilas](https://github.com/nadilas))
+- chore: fix imports to point to .mjs ([@nadilas](https://github.com/nadilas))
+- chore: fix imports ([@nadilas](https://github.com/nadilas))
+- fix: type module ([@nadilas](https://github.com/nadilas))
+- fix: fast-json-patch commonjs import is wrong ([@nadilas](https://github.com/nadilas))
+
+#### Authors: 1
+
+- [@nadilas](https://github.com/nadilas)
+
+---
+
 # v0.10.0 (Sun Apr 07 2024)
 
 #### 🚀 Enhancement
