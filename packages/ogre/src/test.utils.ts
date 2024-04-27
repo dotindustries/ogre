@@ -1,6 +1,6 @@
 import { v4 as uuid4 } from "uuid";
-import { Repository, RepositoryObject } from "./repository";
-import { Commit } from "./commit";
+import { Repository, RepositoryObject } from "./repository.js";
+import { Commit } from "./commit.js";
 
 export type NestedObject = {
   name?: string;

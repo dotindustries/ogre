@@ -1,8 +1,9 @@
 {
   "compilerOptions": {
+    "moduleResolution": "nodenext",
     "declaration": true,
     "importHelpers": true,
-    "module": "umd",
+    "module": "NodeNext",
     "outDir": "./lib",
     "rootDir": "./src",
     "strict": true,

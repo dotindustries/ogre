@@ -11,8 +11,8 @@ import {
   unobserve,
   validate,
 } from "fast-json-patch";
-import { calculateCommitHash, Commit } from "./commit";
-import { History, Reference } from "./interfaces";
+import { calculateCommitHash, Commit } from "./commit.js";
+import { History, Reference } from "./interfaces.js";
 import { compressSync, strToU8 } from "fflate";
 import {
   brancheNameToRef,
@@ -34,7 +34,7 @@ import {
   treeToObject,
   validateBranchName,
   validateRef,
-} from "./utils";
+} from "./utils.js";
 
 export interface RepositoryOptions<T extends { [k: string]: any }> {
   history?: History;
