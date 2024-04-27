@@ -2,7 +2,7 @@
   "compilerOptions": {
     "declaration": true,
     "importHelpers": true,
-    "module": "commonjs",
+    "module": "umd",
     "outDir": "./lib",
     "rootDir": "./src",
     "strict": true,
@@ -12,5 +12,8 @@
   "include": [
     "./src/**/*.ts"
   ],
-  "exclude": ["lib", "node_modules"]
+  "exclude": [
+    "lib",
+    "node_modules"
+  ]
 }
