@@ -10,7 +10,7 @@ import {
   Operation,
   unobserve,
   validate,
-} from "fast-json-patch/index.mjs";
+} from "fast-json-patch";
 import { calculateCommitHash, Commit } from "./commit.js";
 import { History, Reference } from "./interfaces.js";
 import { compressSync, strToU8 } from "fflate";

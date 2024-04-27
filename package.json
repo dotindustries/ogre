@@ -16,7 +16,8 @@
     "lint": "turbo run lint",
     "test": "turbo run test",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "release": "auto shipit"
+    "release": "auto shipit",
+    "postinstall": "patch-package"
   },
   "license": "MIT",
   "devDependencies": {
@@ -27,7 +28,8 @@
     "auto": "^11.0.7",
     "dotenv-cli": "^7.3.0",
     "prettier": "^3.2.5",
-    "turbo": "latest"
+    "turbo": "latest",
+    "patch-package": "^8.0.0"
   },
   "engines": {
     "npm": ">=7.0.0",
