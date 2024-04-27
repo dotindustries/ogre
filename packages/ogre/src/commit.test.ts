@@ -7,9 +7,8 @@ import {
   sumChanges,
   testAuthor,
   updateHeaderData,
-} from "./test.utils";
-import { Repository } from "./repository";
-import { printChangeLog } from "./utils";
+} from "./test.utils.js";
+import { Repository } from "./repository.js";
 
 test("baseline with 1 commit and zero changelog entries", async (t) => {
   const [repo] = await getBaseline();

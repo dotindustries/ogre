@@ -6,8 +6,8 @@ import {
   sumChanges,
   testAuthor,
   updateHeaderData,
-} from "./test.utils";
-import { Repository } from "./repository";
+} from "./test.utils.js";
+import { Repository } from "./repository.js";
 
 test("checkout prev commit", async (t) => {
   const [repo, obj] = await getBaseline();

@@ -1,5 +1,5 @@
 import { test } from "tap";
-import { getBaseline, sumChanges, testAuthor } from "./test.utils";
+import { getBaseline, sumChanges, testAuthor } from "./test.utils.js";
 
 test("current branch on empty repo is HEAD", async (t) => {
   const [repo] = await getBaseline();
