@@ -26,7 +26,7 @@
     "@auto-it/npm": "^11.0.7",
     "@auto-it/released": "^11.0.7",
     "auto": "^11.0.7",
-    "dotenv-cli": "^7.3.0",
+    "dotenv-cli": "^7.4.1",
     "prettier": "^3.2.5",
     "turbo": "latest",
     "patch-package": "^8.0.0"
