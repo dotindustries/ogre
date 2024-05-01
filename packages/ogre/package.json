@@ -26,7 +26,7 @@
     "tslib": "^2.6.2"
   },
   "devDependencies": {
-    "@types/node": "^20.12.5",
+    "@types/node": "^20.12.8",
     "@types/uuid": "^8.3.4",
     "nyc": "^15.1.0",
     "tap": "^18.7.0",
