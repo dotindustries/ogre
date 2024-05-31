@@ -44,7 +44,7 @@ export function digest(obj: any, algorithm = "SHA-256"): Promise<string> {
       }
     } else {
       const nodeAlg = algorithm.toLowerCase().replace("-", "");
-      digest = (await import("node:crypto"))
+      digest = (await import("crypto"))
         .createHash(nodeAlg)
         .update(Buffer.from(hashInput))
         .digest("hex"); // eslint-disable-line
