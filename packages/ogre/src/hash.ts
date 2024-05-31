@@ -39,12 +39,12 @@ export function digest(obj: any, algorithm = "SHA-256"): Promise<string> {
     if (isBrowser()) {
       const buf = await crypto.subtle.digest(algorithm, hashInput);
       const h = "0123456789abcdef";
-      new Uint8Array(buf).forEach((v) => {
+      for (const v of new Uint8Array(buf)) {
         digest += h[v >> 4] + h[v & 15];
-      });
+      }
     } else {
       const nodeAlg = algorithm.toLowerCase().replace("-", "");
-      digest = (await import("crypto"))
+      digest = (await import("node:crypto"))
         .createHash(nodeAlg)
         .update(Buffer.from(hashInput))
         .digest("hex"); // eslint-disable-line
