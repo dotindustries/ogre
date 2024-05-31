@@ -1,6 +1,6 @@
 {
   "name": "@dotinc/ogre-react",
-  "version": "0.10.1",
+  "version": "0.10.2",
   "main": "./index.tsx",
   "types": "./index.tsx",
   "license": "MIT",
@@ -9,7 +9,7 @@
     "url": "https://github.com/dotindustries/ogre.git"
   },
   "dependencies": {
-    "@dotinc/ogre": "^0.10.1",
+    "@dotinc/ogre": "^0.10.2",
     "@gitgraph/react": "^1.6.0"
   },
   "devDependencies": {
