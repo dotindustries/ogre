@@ -1,3 +1,16 @@
+# (Fri May 31 2024)
+
+#### 🐛 Bug Fix
+
+- `@dotinc/ogre@0.10.2`
+  - fix: edge runtime support for crypto [#184](https://github.com/dotindustries/ogre/pull/184) ([@nadilas](https://github.com/nadilas))
+
+#### Authors: 1
+
+- [@nadilas](https://github.com/nadilas)
+
+---
+
 # (Sat Apr 27 2024)
 
 #### 🐛 Bug Fix

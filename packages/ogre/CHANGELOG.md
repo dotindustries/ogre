@@ -1,3 +1,19 @@
+# v0.10.2 (Fri May 31 2024)
+
+#### 🐛 Bug Fix
+
+- fix: edge runtime support for crypto [#184](https://github.com/dotindustries/ogre/pull/184) ([@nadilas](https://github.com/nadilas))
+- fix: Module build failed: UnhandledSchemeError: Reading from "node:crypto" is not handled by plugins ([@nadilas](https://github.com/nadilas))
+- refactor: code clarity ([@nadilas](https://github.com/nadilas))
+- fix: typeof string literal in isBrowser check ([@nadilas](https://github.com/nadilas))
+- fix: browser detection for edge runtime support for crypto package ([@nadilas](https://github.com/nadilas))
+
+#### Authors: 1
+
+- [@nadilas](https://github.com/nadilas)
+
+---
+
 # v0.10.1 (Sat Apr 27 2024)
 
 #### 🐛 Bug Fix
