@@ -7,6 +7,8 @@
  * @packageDocumentation
  */
 
+import { isBrowser } from "./utils.js";
+
 /**
  * Returns a string with a hexadecimal representation of the digest of the input object using a given hash algorithm.
  * It first creates an array of the object values ordered by the object keys (using hashable(obj));
@@ -21,11 +23,7 @@
  *
  * @returns a promise that resolves to a string with hexadecimal content.
  */
-export function digest(
-  obj: any,
-  algorithm = "SHA-256",
-  isBrowser = false,
-): Promise<string> {
+export function digest(obj: any, algorithm = "SHA-256"): Promise<string> {
   // eslint-disable-line
   const algorithms = ["SHA-1", "SHA-256", "SHA-384", "SHA-512"];
   if (!algorithms.includes(algorithm)) {
@@ -38,12 +36,12 @@ export function digest(
     const hashInput = encoder.encode(hashable(obj)).buffer;
     let digest = "";
 
-    if (isBrowser) {
+    if (isBrowser()) {
       const buf = await crypto.subtle.digest(algorithm, hashInput);
       const h = "0123456789abcdef";
-      new Uint8Array(buf).forEach((v) => {
+      for (const v of new Uint8Array(buf)) {
         digest += h[v >> 4] + h[v & 15];
-      });
+      }
     } else {
       const nodeAlg = algorithm.toLowerCase().replace("-", "");
       digest = (await import("crypto"))
