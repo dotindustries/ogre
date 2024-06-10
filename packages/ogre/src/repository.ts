@@ -13,7 +13,6 @@ import {
 } from "fast-json-patch";
 import { calculateCommitHash, Commit } from "./commit.js";
 import { History, Reference } from "./interfaces.js";
-import { compressSync, strToU8 } from "fflate";
 import {
   brancheNameToRef,
   cleanRefValue,
@@ -26,6 +25,7 @@ import {
   localHeadPathPrefix,
   mapPath,
   mutableMapCopy,
+  objectToTree,
   REFS_HEAD_KEY,
   REFS_MAIN_KEY,
   refsAtCommit,
@@ -429,9 +429,7 @@ export class Repository<T extends { [k: PropertyKey]: any }>
       timestamp,
     });
 
-    const treeHash = Buffer.from(
-      compressSync(strToU8(JSON.stringify(this.data)), { level: 6, mem: 8 }),
-    ).toString("base64");
+    const treeHash = objectToTree(this.data);
     const commit = {
       hash: sha,
       message,
