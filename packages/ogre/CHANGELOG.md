@@ -1,3 +1,16 @@
+# v0.10.3 (Tue Jun 11 2024)
+
+#### 🐛 Bug Fix
+
+- fix: extract util function to compress object [#185](https://github.com/dotindustries/ogre/pull/185) ([@nadilas](https://github.com/nadilas))
+- fix: extract util function to compress object ([@nadilas](https://github.com/nadilas))
+
+#### Authors: 1
+
+- [@nadilas](https://github.com/nadilas)
+
+---
+
 # v0.10.2 (Fri May 31 2024)
 
 #### 🐛 Bug Fix
