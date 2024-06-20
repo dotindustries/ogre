@@ -1,3 +1,16 @@
+# v0.11.0 (Thu Jun 20 2024)
+
+#### 🚀 Enhancement
+
+- feat: temporal support [#186](https://github.com/dotindustries/ogre/pull/186) ([@nadilas](https://github.com/nadilas))
+- feat: allow override of hash algo for temporal support ([@nadilas](https://github.com/nadilas))
+
+#### Authors: 1
+
+- [@nadilas](https://github.com/nadilas)
+
+---
+
 # v0.10.3 (Tue Jun 11 2024)
 
 #### 🐛 Bug Fix

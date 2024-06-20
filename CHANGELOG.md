@@ -1,3 +1,16 @@
+# (Thu Jun 20 2024)
+
+#### 🚀 Enhancement
+
+- `@dotinc/ogre@0.11.0`
+  - feat: temporal support [#186](https://github.com/dotindustries/ogre/pull/186) ([@nadilas](https://github.com/nadilas))
+
+#### Authors: 1
+
+- [@nadilas](https://github.com/nadilas)
+
+---
+
 # (Tue Jun 11 2024)
 
 #### 🐛 Bug Fix
