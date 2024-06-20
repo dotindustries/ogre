@@ -11,8 +11,8 @@ import {
   unobserve,
   validate,
 } from "fast-json-patch";
-import { calculateCommitHash, Commit } from "./commit.js";
-import { History, Reference } from "./interfaces.js";
+import type { Commit, CommitHashContent } from "./commit.js";
+import type { History, Reference } from "./interfaces.js";
 import {
   brancheNameToRef,
   cleanRefValue,
@@ -36,8 +36,11 @@ import {
   validateRef,
 } from "./utils.js";
 
-export interface RepositoryOptions<T extends { [k: string]: any }> {
+export interface RepositoryOptions {
   history?: History;
+  overrides?: {
+    calculateCommitHashFn?: (content: CommitHashContent) => Promise<string>;
+  };
 }
 
 export interface RepositoryObject<T extends { [k: string]: any }> {
@@ -112,7 +115,8 @@ export interface RepositoryObject<T extends { [k: string]: any }> {
 export class Repository<T extends { [k: PropertyKey]: any }>
   implements RepositoryObject<T>
 {
-  constructor(obj: Partial<T>, options: RepositoryOptions<T>) {
+  constructor(obj: Partial<T>, options: RepositoryOptions) {
+    this.hashFn = options.overrides?.calculateCommitHashFn;
     // FIXME: move this to refs/remote as git would do?
     this.remoteRefs = immutableMapCopy(options.history?.refs);
     this.remoteCommits = immutableArrayCopy<Commit, string>(
@@ -149,6 +153,9 @@ export class Repository<T extends { [k: PropertyKey]: any }>
   private readonly original: T;
 
   data: T;
+  private readonly hashFn:
+    | ((content: CommitHashContent) => Promise<string>)
+    | undefined;
 
   // stores the remote state upon initialization
   private readonly remoteRefs:
@@ -421,6 +428,9 @@ export class Repository<T extends { [k: PropertyKey]: any }>
         ? parent.changes
         : [];
     const changes = [...parentChanges, ...patch];
+    const calculateCommitHash =
+      this.hashFn ?? (await import("./commit.js")).calculateCommitHash;
+
     const sha = await calculateCommitHash({
       message,
       author,
