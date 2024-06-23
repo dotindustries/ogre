@@ -8,12 +8,7 @@ test("merge with no commit fails", async (t) => {
 
   repo.createBranch("new_feature");
 
-  t.throws(
-    () => {
-      repo.merge("new_feature");
-    },
-    { message: "already up to date" },
-  );
+  await t.rejects(repo.merge("new_feature"), { message: "already up to date" });
 });
 
 test("merge fast-forward", async (t) => {
@@ -22,7 +17,7 @@ test("merge fast-forward", async (t) => {
   await repo.commit("simple change", testAuthor);
   const masterCommitCount = repo.getHistory().commits.length;
 
-  repo.checkout("new_branch", true);
+  await repo.checkout("new_branch", true);
   repo.data.name = "another name";
   const minorHash = await repo.commit("minor change", testAuthor);
   t.equal(
@@ -37,8 +32,8 @@ test("merge fast-forward", async (t) => {
   );
 
   // go to destination branch
-  repo.checkout("main");
-  const mergeHash = repo.merge("new_branch");
+  await repo.checkout("main");
+  const mergeHash = await repo.merge("new_branch");
   const headRef = repo.head();
   const refHash = repo.ref(headRef);
 

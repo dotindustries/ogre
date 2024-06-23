@@ -32,7 +32,7 @@ test("diff is ok", async (t) => {
 
   const second = await repo.commit("second nested", testAuthor);
 
-  const diff = repo.diff(zeroth);
+  const diff = await repo.diff(zeroth);
   t.equal(
     diff.length,
     changeEntries,
@@ -137,6 +137,7 @@ test("history", async (t) => {
 
     const obj2 = {};
     const repo2 = new Repository(obj2, { history });
+    await repo2.isReady();
 
     t.matchOnlyStrict(
       obj,
@@ -154,6 +155,7 @@ test("history", async (t) => {
     const history = repo.getHistory();
 
     const r2 = new Repository<ComplexObject>({}, { history });
+    await r2.isReady();
     const remoteBeforeChange = r2.remote();
 
     r2.data.name = "a different name";
@@ -228,12 +230,12 @@ test("reset", async (t) => {
     t.equal(h1.commits.length, 1);
     // do changes
     const changes = updateHeaderData(co);
-    const diff = repo.diff(hash);
+    const diff = await repo.diff(hash);
     t.equal(diff.length, changes, "wrong # of changes in diff");
 
     // reset
     repo.reset("hard");
-    const diff2 = repo.diff(hash);
+    const diff2 = await repo.diff(hash);
     t.equal(diff2.length, 0, "failed to reset");
   });
 });
@@ -247,7 +249,7 @@ test("status", async (t) => {
   t.test("clean repo pending change", async (t) => {
     const [repo] = await getBaseline({ name: "base name" });
     repo.data.name = "changed name";
-    const dirtyState = repo.status();
+    const dirtyState = await repo.status();
     t.equal(
       dirtyState.length,
       1,
@@ -257,14 +259,14 @@ test("status", async (t) => {
   t.test("reading status shouldn't clean observer", async (t) => {
     const [repo] = await getBaseline({ name: "base name" });
     repo.data.name = "changed name";
-    const dirtyState = repo.status();
+    const dirtyState = await repo.status();
     t.equal(
       dirtyState.length,
       1,
       `Status doesn't contain the expected # of changes: ${JSON.stringify(dirtyState)}`,
     );
 
-    const dirtyState2 = repo.status();
+    const dirtyState2 = await repo.status();
     t.equal(
       dirtyState2.length,
       1,
@@ -276,27 +278,27 @@ test("status", async (t) => {
     const [repo] = await getBaseline();
     repo.data.name = "new name";
     await repo.commit("baseline", testAuthor);
-    const cleanState = repo.status();
+    const cleanState = await repo.status();
     t.match(cleanState, [], "Shouldn't have pending changes");
   });
   t.test("after commit pending change", async (t) => {
     const [repo] = await getBaseline();
     repo.data.name = "new name";
     await repo.commit("baseline", testAuthor);
-    const cleanState = repo.status();
+    const cleanState = await repo.status();
     t.match(cleanState, [], "Shouldn't have pending changes");
     repo.data.name = "changed name";
-    const dirtyState = repo.status();
+    const dirtyState = await repo.status();
     t.equal(dirtyState.length, 1, "Status doesn't contain changes");
   });
   t.test("after commit pending change for rewrite array", async (t) => {
     const [repo] = await getBaseline();
     repo.data.name = "new name";
     await repo.commit("baseline", testAuthor);
-    const cleanState = repo.status();
+    const cleanState = await repo.status();
     t.match(cleanState, [], "Shouldn't have pending changes");
     repo.data.nested = [{ name: "new item", uuid: "asdf" }];
-    const dirtyState = repo.status();
+    const dirtyState = await repo.status();
     t.equal(dirtyState.length, 1, "Status doesn't contain changes");
   });
   t.test("change of nested array element prop", async (t) => {
@@ -304,10 +306,10 @@ test("status", async (t) => {
     repo.data.name = "new name";
     addOneStep(repo.data);
     await repo.commit("baseline", testAuthor);
-    const cleanState = repo.status();
+    const cleanState = await repo.status();
     t.match(cleanState, [], "Shouldn't have pending changes");
     repo.data.nested[0].name = "another name which is different";
-    const dirtyState = repo.status();
+    const dirtyState = await repo.status();
     t.equal(dirtyState?.length, 1, "Status doesn't contain changes");
   });
 });
@@ -315,7 +317,7 @@ test("status", async (t) => {
 test("apply", async (t) => {
   t.test("single patch", async (t) => {
     const [repo] = await getBaseline({ name: "base name" });
-    const cleanState = repo.status();
+    const cleanState = await repo.status();
     t.match(cleanState, [], "Shouldn't have pending changes");
 
     const targetState = {
@@ -329,7 +331,7 @@ test("apply", async (t) => {
     const err = repo.apply(patches);
     t.match(err, undefined, "Failed to apply patch");
     t.match(repo.data, targetState, "The final state does not match up");
-    const dirtyState = repo.status();
+    const dirtyState = await repo.status();
     t.equal(dirtyState.length, 2, "Status doesn't contain changes");
     t.match(dirtyState, patches, "It should have the right changes");
   });
@@ -337,7 +339,7 @@ test("apply", async (t) => {
   t.test("patch for undefined props with workaround", async (t) => {
     // solution for workaround from: https://github.com/Starcounter-Jack/JSON-Patch/issues/280
     const [repo] = await getBaseline();
-    const cleanState = repo.status();
+    const cleanState = await repo.status();
     t.match(cleanState, [], "Shouldn't have pending changes");
 
     const targetState: ComplexObject = {
@@ -352,14 +354,14 @@ test("apply", async (t) => {
     t.equal(err, undefined, "Failed to apply patch");
 
     t.match(repo.data, targetState, "The final state should match up");
-    const dirtyState = repo.status();
+    const dirtyState = await repo.status();
     t.equal(dirtyState.length, 1, "Status should contain 1 change");
   });
 
   t.test("multiple patches", async (t) => {
     const [repo] = await getBaseline({ name: "base name" });
 
-    const cleanState = repo.status();
+    const cleanState = await repo.status();
     t.match(cleanState, [], "Shouldn't have pending changes");
     const targetState = {
       uuid: undefined,
@@ -370,7 +372,7 @@ test("apply", async (t) => {
     const patches = compare(repo.data, targetState);
     const err = repo.apply(patches);
     t.equal(err, undefined, "Failed to apply patch");
-    const dirtyState = repo.status();
+    const dirtyState = await repo.status();
     t.equal(dirtyState?.length, 2, "Status doesn't contain changes");
     t.match(dirtyState, patches, "It should have the right changes");
     t.match(repo.data, targetState, "The final state does not match up");
@@ -491,7 +493,7 @@ test("pending changes - push helpers", async (t) => {
     const hash1 = await repo2.commit("changed desc", testAuthor);
     repo2.data.uuid = "uuid1";
     const hash2 = await repo2.commit("changed uuid", testAuthor);
-    repo2.checkout("branch2", true);
+    await repo2.checkout("branch2", true);
 
     const { commits } = repo2.getHistory();
     const pendingCommit1 = commits.find((c) => c.hash === hash1);
@@ -528,7 +530,7 @@ test("pending changes - push helpers", async (t) => {
     const hash1 = await repo2.commit("changed desc", testAuthor);
     repo2.data.uuid = "uuid1";
     const hash2 = await repo2.commit("changed uuid", testAuthor);
-    repo2.checkout("branch2", true);
+    await repo2.checkout("branch2", true);
 
     repo2.data.nested = [{ name: "a", uuid: "thing" }];
     const hash3 = await repo2.commit("added a thing", testAuthor);
@@ -569,7 +571,7 @@ test("pending changes - push helpers", async (t) => {
     const hash1 = await repo2.commit("changed desc", testAuthor);
     repo2.data.uuid = "uuid1";
     const hash2 = await repo2.commit("changed uuid", testAuthor);
-    repo2.checkout("branch2", true);
+    await repo2.checkout("branch2", true);
 
     repo2.data.nested = [{ name: "a", uuid: "thing" }];
     const hash3 = await repo2.commit("added a thing", testAuthor);
@@ -606,14 +608,14 @@ test("pending changes - push helpers", async (t) => {
     const history = repo.getHistory();
 
     const repo2 = new Repository<ComplexObject>({}, { history });
-    repo2.checkout("branch2", true);
+    await repo2.checkout("branch2", true);
 
     repo2.data.nested = [{ name: "a", uuid: "thing" }];
     const hash3 = await repo2.commit("added a thing", testAuthor);
     repo2.tag("v0.2.0");
 
-    repo2.checkout("main");
-    repo2.merge("branch2");
+    await repo2.checkout("main");
+    await repo2.merge("branch2");
 
     const { commits } = repo2.getHistory();
     const pendingCommit3 = commits.find((c) => c.hash === hash3);
@@ -644,13 +646,13 @@ test("pending changes - push helpers", async (t) => {
     const history = repo.getHistory();
 
     const repo2 = new Repository<ComplexObject>({}, { history });
-    repo2.checkout("branch2", true);
+    await repo2.checkout("branch2", true);
 
     repo2.data.nested = [{ name: "a", uuid: "thing" }];
     const hash3 = await repo2.commit("added a thing", testAuthor);
 
-    repo2.checkout("main");
-    repo2.merge("branch2");
+    await repo2.checkout("main");
+    await repo2.merge("branch2");
 
     const { commits } = repo2.getHistory();
     const pendingCommit3 = commits.find((c) => c.hash === hash3);
@@ -680,7 +682,7 @@ test("pending changes - push helpers", async (t) => {
     const history = repo.getHistory();
 
     const repo2 = new Repository<ComplexObject>({}, { history });
-    repo2.checkout("branch2", true);
+    await repo2.checkout("branch2", true);
 
     repo2.data.nested = [{ name: "a", uuid: "thing" }];
     const hash3 = await repo2.commit("added a thing", testAuthor);
@@ -713,7 +715,7 @@ test("pending changes - push helpers", async (t) => {
     const history = repo.getHistory();
 
     const repo2 = new Repository<ComplexObject>({}, { history });
-    repo2.checkout("branch2", true);
+    await repo2.checkout("branch2", true);
 
     const pending = repo2.cherry();
 

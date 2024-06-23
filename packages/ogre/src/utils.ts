@@ -1,7 +1,6 @@
 // [RFC5322](https://www.ietf.org/rfc/rfc5322.txt)
 import { Commit } from "./commit.js";
 import { Reference } from "./interfaces.js";
-import { compressSync, decompressSync, strFromU8, strToU8 } from "fflate";
 import { validBranch, validRef } from "./ref.js";
 import { deepClone, Operation } from "fast-json-patch";
 import { RepositoryObject } from "./repository.js";
@@ -52,15 +51,6 @@ export const REFS_HEAD_KEY = "HEAD";
  */
 export const REFS_MAIN_KEY = `${localHeadPathPrefix()}main`;
 
-export function objectToTree(obj: any) {
-  return Buffer.from(
-    compressSync(strToU8(JSON.stringify(obj)), { level: 6, mem: 8 }),
-  ).toString("base64");
-}
-
-export const treeToObject = <T = any>(tree: string): T => {
-  return JSON.parse(strFromU8(decompressSync(Buffer.from(tree, "base64"))));
-};
 /**
  * Maps the path from a commit to another commit.
  * It travels backwards through parent relationships until the root state.

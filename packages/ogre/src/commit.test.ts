@@ -28,7 +28,7 @@ test("changes are available for commit if starting from empty", async (t) => {
   const repo = new Repository<ComplexObject>({}, {});
   repo.data.name = "some data";
 
-  const dirty = repo.status();
+  const dirty = await repo.status();
 
   t.equal(
     dirty.length,
@@ -222,7 +222,7 @@ test("commit at detached HEAD does not affect main, but moves head", async (t) =
   repo.data.description = "new fancy description";
   const last = await repo.commit("desc change", testAuthor);
 
-  repo.checkout(commit);
+  await repo.checkout(commit);
   t.equal(repo.head(), commit, "HEAD did not move to commit");
   t.equal(repo.branch(), "HEAD", "repo is not in detached state");
   t.matchOnly(v1, repo.data, "object state does not match");
@@ -243,7 +243,7 @@ test("commit at detached HEAD saved to a branch", async (t) => {
   const commit = await repo.commit("name change", testAuthor);
   repo.data.description = "new fancy description";
   await repo.commit("desc change", testAuthor);
-  repo.checkout(commit);
+  await repo.checkout(commit);
 
   repo.data.description = "a different description";
   const commitOnDetached = await repo.commit("msg", testAuthor);
@@ -262,7 +262,7 @@ test("commit --amend changes hash on message change even in detached HEAD", asyn
   const commitToAmend = await repo.commit("name change", testAuthor);
   repo.data.description = "desc change";
   const descCommit = await repo.commit("desc change", testAuthor);
-  repo.checkout(commitToAmend);
+  await repo.checkout(commitToAmend);
   const changedHash = await repo.commit("initial setup", testAuthor, true);
   t.not(changedHash, commitToAmend, "hash should have changed");
   const history = repo.getHistory();

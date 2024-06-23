@@ -9,6 +9,13 @@
   "private": false,
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
+  "exports": {
+    ".": {
+      "source": "./src/index.ts",
+      "import": "./lib/index.js",
+      "require": "./lib/index.js"
+    }
+  },
   "type": "module",
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
