@@ -1,3 +1,16 @@
+# (Sun Jun 23 2024)
+
+#### 🚀 Enhancement
+
+- `@dotinc/ogre@0.12.0`
+  - feat: continue temporal support [#187](https://github.com/dotindustries/ogre/pull/187) ([@nadilas](https://github.com/nadilas))
+
+#### Authors: 1
+
+- [@nadilas](https://github.com/nadilas)
+
+---
+
 # (Thu Jun 20 2024)
 
 #### 🚀 Enhancement

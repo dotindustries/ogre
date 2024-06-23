@@ -1,3 +1,22 @@
+# v0.12.0 (Sun Jun 23 2024)
+
+#### 🚀 Enhancement
+
+- feat: continue temporal support [#187](https://github.com/dotindustries/ogre/pull/187) ([@nadilas](https://github.com/nadilas))
+- feat: allow override for serialization (temporal support) ([@nadilas](https://github.com/nadilas))
+
+#### 🐛 Bug Fix
+
+- fix: missed an await ([@nadilas](https://github.com/nadilas))
+- chore: export utils and helpers ([@nadilas](https://github.com/nadilas))
+- fix: override functions are async ([@nadilas](https://github.com/nadilas))
+
+#### Authors: 1
+
+- [@nadilas](https://github.com/nadilas)
+
+---
+
 # v0.11.0 (Thu Jun 20 2024)
 
 #### 🚀 Enhancement
