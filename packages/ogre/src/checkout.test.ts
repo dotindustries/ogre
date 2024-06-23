@@ -18,7 +18,7 @@ test("checkout prev commit", async (t) => {
   addOneStep(obj);
   await repo.commit("first step", testAuthor);
 
-  repo.checkout(headerDataHash);
+  await repo.checkout(headerDataHash);
   const head = repo.head();
   const history = repo.getHistory();
   t.equal(sumChanges(history.commits), 3, `incorrect # of changelog entries`);
@@ -38,7 +38,7 @@ test("checkout new branch with simple name", async (t) => {
   await repo.commit("simple change", testAuthor);
 
   const ref = repo.createBranch("new_feature");
-  repo.checkout("new_feature");
+  await repo.checkout("new_feature");
   t.equal(repo.head(), ref, "HEAD is not moved to target branch");
 });
 
@@ -48,7 +48,7 @@ test("checkout new branch with full ref name", async (t) => {
   await repo.commit("simple change", testAuthor);
 
   const ref = repo.createBranch("new_feature");
-  repo.checkout(ref);
+  await repo.checkout(ref);
   t.equal(repo.head(), ref, "HEAD is not moved to target branch");
 });
 
@@ -58,7 +58,7 @@ test("checkout commit which has two refs pointing leaves HEAD detached", async (
   const commit = await repo.commit("simple change", testAuthor);
 
   repo.createBranch("new_feature");
-  repo.checkout(commit);
+  await repo.checkout(commit);
   t.equal(repo.ref("refs/heads/main"), commit, "main does not point to commit");
   t.equal(
     repo.ref("refs/heads/new_feature"),
@@ -75,14 +75,14 @@ test("checkout new branch moves head to new branch", async (t) => {
   await repo.commit("simple change", testAuthor);
 
   const ref = repo.createBranch("new_feature");
-  repo.checkout("new_feature");
+  await repo.checkout("new_feature");
   t.equal(repo.head(), ref, "HEAD is not moved to target branch");
 });
 
 test("checkout and create new branch on empty main", async (t) => {
   const [repo] = await getBaseline();
 
-  repo.checkout("new_feature", true);
+  await repo.checkout("new_feature", true);
   t.equal(
     repo.head(),
     "refs/heads/new_feature",
@@ -96,7 +96,7 @@ test("checkout and create new branch with at least 1 commit", async (t) => {
   repo.data.name = "new name";
   const commit = await repo.commit("simple change", testAuthor);
 
-  repo.checkout("new_feature", true);
+  await repo.checkout("new_feature", true);
   t.equal(
     repo.head(),
     "refs/heads/new_feature",
@@ -117,7 +117,7 @@ test("replacing default branch on empty master removes main", async (t) => {
 
   // replacing default main branch by moving HEAD to new branch
   // is OK even on empty repo
-  repo.checkout("new_feature", true);
+  await repo.checkout("new_feature", true);
   const history = repo.getHistory();
   t.equal(
     sumChanges(history?.commits),
@@ -129,10 +129,7 @@ test("replacing default branch on empty master removes main", async (t) => {
   repo.data.description = "description changed";
   await repo.commit("description changes", testAuthor);
 
-  t.throws(
-    () => {
-      repo.checkout("main");
-    },
-    { message: `pathspec 'main' did not match any known refs` },
-  );
+  await t.rejects(repo.checkout("main"), {
+    message: `pathspec 'main' did not match any known refs`,
+  });
 });

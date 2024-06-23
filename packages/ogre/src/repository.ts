@@ -25,13 +25,11 @@ import {
   localHeadPathPrefix,
   mapPath,
   mutableMapCopy,
-  objectToTree,
   REFS_HEAD_KEY,
   REFS_MAIN_KEY,
   refsAtCommit,
   shaishToCommit,
   tagToRef,
-  treeToObject,
   validateBranchName,
   validateRef,
 } from "./utils.js";
@@ -40,6 +38,8 @@ export interface RepositoryOptions {
   history?: History;
   overrides?: {
     calculateCommitHashFn?: (content: CommitHashContent) => Promise<string>;
+    serializeObjectFn?: (obj: any) => Promise<string>;
+    deserializeObjectFn?: <T>(str: string) => Promise<T>;
   };
 }
 
@@ -54,12 +54,12 @@ export interface RepositoryObject<T extends { [k: string]: any }> {
    * @param shaishFrom expression (e.g. refs (branches, tags), commitSha)
    * @param shaishTo expression (e.g. refs (branches, tags), commitSha)
    */
-  diff(shaishFrom: string, shaishTo?: string): Array<Operation>;
+  diff(shaishFrom: string, shaishTo?: string): Promise<Array<Operation>>;
 
   /**
    * Returns pending changes.
    */
-  status(): Array<Operation>;
+  status(): Promise<Array<Operation>>;
 
   /**
    * Applies a patch to the repository's HEAD
@@ -75,13 +75,13 @@ export interface RepositoryObject<T extends { [k: string]: any }> {
 
   commit(message: string, author: string, amend?: boolean): Promise<string>;
 
-  checkout(shaish: string, createBranch?: boolean): void;
+  checkout(shaish: string, createBranch?: boolean): Promise<void>;
 
   logs(commits?: number): Array<Commit>;
 
   createBranch(name: string): string;
 
-  merge(source: string | RepositoryObject<T> | History): string;
+  merge(source: string | RepositoryObject<T> | History): Promise<string>;
 
   /**
    * Branch returns the current branch name
@@ -95,7 +95,7 @@ export interface RepositoryObject<T extends { [k: string]: any }> {
    * @param mode hard - discard changes
    * @param shaish
    */
-  reset(mode?: "soft" | "hard", shaish?: string): void;
+  reset(mode?: "soft" | "hard", shaish?: string): Promise<void>;
 
   /**
    * Returns the remote references from the initialization of the repository.
@@ -117,6 +117,8 @@ export class Repository<T extends { [k: PropertyKey]: any }>
 {
   constructor(obj: Partial<T>, options: RepositoryOptions) {
     this.hashFn = options.overrides?.calculateCommitHashFn;
+    this.serializeObjectFn = options.overrides?.serializeObjectFn;
+    this.deserializeObjectFn = options.overrides?.deserializeObjectFn;
     // FIXME: move this to refs/remote as git would do?
     this.remoteRefs = immutableMapCopy(options.history?.refs);
     this.remoteCommits = immutableArrayCopy<Commit, string>(
@@ -141,20 +143,52 @@ export class Repository<T extends { [k: PropertyKey]: any }>
 
     this.commits = options.history?.commits ?? [];
 
-    if (options.history) {
-      const commit = this.commitAtHead();
-      if (!commit) {
-        return;
-      }
-      this.moveTo(commit);
+    if (!options.history) {
+      this._isReady = true;
+      return;
     }
+
+    // restore history
+    const commit = this.commitAtHead();
+    if (!commit) {
+      this._isReady = true;
+      return;
+    }
+    this.moveTo(commit).then(() => {
+      this._isReady = true;
+    });
   }
 
   private readonly original: T;
+  private _isReady = false;
+
+  isReady(): Promise<boolean> {
+    const self = this;
+
+    function checkFlag(callback: (ok: boolean) => void) {
+      if (self._isReady === true) {
+        callback(true);
+      } else {
+        setTimeout(() => checkFlag(callback), 10);
+      }
+    }
+
+    return new Promise((resolve) => {
+      checkFlag(resolve);
+    });
+  }
 
   data: T;
   private readonly hashFn:
     | ((content: CommitHashContent) => Promise<string>)
+    | undefined;
+
+  private readonly serializeObjectFn:
+    | ((obj: any) => Promise<string>)
+    | undefined;
+
+  private readonly deserializeObjectFn:
+    | (<T>(str: string) => Promise<T>)
     | undefined;
 
   // stores the remote state upon initialization
@@ -267,8 +301,9 @@ export class Repository<T extends { [k: PropertyKey]: any }>
     return this.remoteRefs;
   }
 
-  private moveTo(commit: Commit) {
-    const targetTree = treeToObject(commit.tree);
+  private async moveTo(commit: Commit) {
+    const deserializeFn = this.deserializeObjectFn ?? defaultDeserializeFn;
+    const targetTree = await deserializeFn<T>(commit.tree);
     const patchToTarget = compare(this.data, targetTree);
     if (!patchToTarget || patchToTarget.length < 1) {
       return;
@@ -310,16 +345,16 @@ export class Repository<T extends { [k: PropertyKey]: any }>
     // const changed = patch.reduce(applyReducer, this.data);
   }
 
-  reset(
+  async reset(
     mode: "soft" | "hard" | undefined = "hard",
     shaish: string | undefined = REFS_HEAD_KEY,
-  ): void {
+  ): Promise<void> {
     if (mode === "hard") {
       unobserve(this.data, this.observer);
     }
 
     const [commit] = shaishToCommit(shaish, this.refs, this.commits);
-    this.moveTo(commit);
+    await this.moveTo(commit);
 
     const refs = refsAtCommit(this.refs, commit);
     // reset only moves heads and not tags
@@ -350,7 +385,7 @@ export class Repository<T extends { [k: PropertyKey]: any }>
     return REFS_HEAD_KEY; // detached state
   }
 
-  status() {
+  async status() {
     const commit = this.commitAtHead();
     if (!commit) {
       // on root repo return the pending changes
@@ -359,21 +394,22 @@ export class Repository<T extends { [k: PropertyKey]: any }>
     return this.diff(commit.hash);
   }
 
-  diff(shaishFrom: string, shaishTo?: string): Array<Operation> {
+  async diff(shaishFrom: string, shaishTo?: string): Promise<Array<Operation>> {
     const [cFrom] = shaishToCommit(shaishFrom, this.refs, this.commits);
     let target: T;
+    const deserializeFn = this.deserializeObjectFn ?? defaultDeserializeFn;
     if (shaishTo) {
       const [cTo] = shaishToCommit(shaishTo, this.refs, this.commits);
-      target = treeToObject(cTo.tree);
+      target = await deserializeFn(cTo.tree);
     } else {
       target = this.data;
     }
-    const targetTree = treeToObject(cFrom.tree);
+    const targetTree = await deserializeFn<T>(cFrom.tree);
 
     return compare(targetTree, target);
   }
 
-  checkout(shaish: string, createBranch?: boolean): void {
+  async checkout(shaish: string, createBranch?: boolean): Promise<void> {
     if (createBranch) {
       validateBranchName(shaish);
       let branchRef = brancheNameToRef(shaish);
@@ -388,7 +424,7 @@ export class Repository<T extends { [k: PropertyKey]: any }>
         this.refs,
         this.commits,
       );
-      this.moveTo(commit);
+      await this.moveTo(commit);
       this.moveRef(
         REFS_HEAD_KEY,
         isRef && refKey !== undefined ? refKey : commit,
@@ -428,8 +464,7 @@ export class Repository<T extends { [k: PropertyKey]: any }>
         ? parent.changes
         : [];
     const changes = [...parentChanges, ...patch];
-    const calculateCommitHash =
-      this.hashFn ?? (await import("./commit.js")).calculateCommitHash;
+    const calculateCommitHash = this.hashFn ?? defaultHashFn;
 
     const sha = await calculateCommitHash({
       message,
@@ -439,7 +474,9 @@ export class Repository<T extends { [k: PropertyKey]: any }>
       timestamp,
     });
 
-    const treeHash = objectToTree(this.data);
+    const serializeFn = this.serializeObjectFn ?? defaultSerializeFn;
+
+    const treeHash = await serializeFn(this.data);
     const commit = {
       hash: sha,
       message,
@@ -536,7 +573,7 @@ export class Repository<T extends { [k: PropertyKey]: any }>
 
   // endregion
 
-  merge(source: string | RepositoryObject<T> | History): string {
+  async merge(source: string | RepositoryObject<T> | History): Promise<string> {
     // inspiration
     // http://think-like-a-git.net
     // also check isomorphic-git
@@ -574,7 +611,7 @@ export class Repository<T extends { [k: PropertyKey]: any }>
     const [isAncestor] = mapPath(this.commits, srcCommit, headCommit);
     if (isAncestor) {
       this.moveRef(this.head(), srcCommit);
-      this.moveTo(srcCommit);
+      await this.moveTo(srcCommit);
       return srcCommit.hash;
     }
 
@@ -645,3 +682,18 @@ export class Repository<T extends { [k: PropertyKey]: any }>
     return tagRef;
   }
 }
+
+const defaultHashFn = async (content: CommitHashContent) => {
+  const fn = (await import("./commit.js")).calculateCommitHash;
+  return fn(content);
+};
+
+const defaultSerializeFn = async (obj: any) => {
+  const fn = (await import("./serialize.js")).objectToTree;
+  return fn(obj);
+};
+
+const defaultDeserializeFn = async <T>(str: string): Promise<T> => {
+  const fn = (await import("./serialize.js")).treeToObject;
+  return fn(str);
+};

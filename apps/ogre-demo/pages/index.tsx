@@ -132,7 +132,7 @@ const code = `
     r.data.description = 'first description'
     await r.commit('initial commit', author)
 
-    r.checkout('description', true)
+    await r.checkout('description', true)
     r.data.description = 'some longer different description'
     await r.commit('change desc', author)
 
@@ -144,8 +144,8 @@ const code = `
     r.data.description = 'yet another correction'
     await r.commit('typo fix', author)
 
-    r.checkout('main')
-    r.merge('description')
+    await r.checkout('main')
+    await r.merge('description')
 
     return r
   }

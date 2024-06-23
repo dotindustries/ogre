@@ -42,7 +42,7 @@ const run = async ({name = 'author'}: {name?: string}) => {
 	r.data.description = 'first description';
 	await r.commit('initial commit', author);
 
-	r.checkout('desc-up', true);
+	await r.checkout('desc-up', true);
 	r.data.description = 'some longer different description';
 	await r.commit('change desc', author);
 
@@ -54,8 +54,8 @@ const run = async ({name = 'author'}: {name?: string}) => {
 	r.data.description = 'yet another correction';
 	await r.commit('typo fix', author);
 
-	r.checkout('main');
-	r.merge('desc-up');
+	await r.checkout('main');
+	await r.merge('desc-up');
 
 	const history = r.getHistory();
 
