@@ -303,7 +303,7 @@ export class Repository<T extends { [k: PropertyKey]: any }>
 
   private async moveTo(commit: Commit) {
     const deserializeFn = this.deserializeObjectFn ?? defaultDeserializeFn;
-    const targetTree = deserializeFn<T>(commit.tree);
+    const targetTree = await deserializeFn<T>(commit.tree);
     const patchToTarget = compare(this.data, targetTree);
     if (!patchToTarget || patchToTarget.length < 1) {
       return;
