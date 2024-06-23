@@ -38,8 +38,8 @@ export interface RepositoryOptions {
   history?: History;
   overrides?: {
     calculateCommitHashFn?: (content: CommitHashContent) => Promise<string>;
-    serializeObjectFn?: (obj: any) => string;
-    deserializeObjectFn?: <T>(str: string) => T;
+    serializeObjectFn?: (obj: any) => Promise<string>;
+    deserializeObjectFn?: <T>(str: string) => Promise<T>;
   };
 }
 
@@ -183,9 +183,13 @@ export class Repository<T extends { [k: PropertyKey]: any }>
     | ((content: CommitHashContent) => Promise<string>)
     | undefined;
 
-  private readonly serializeObjectFn: ((obj: any) => string) | undefined;
+  private readonly serializeObjectFn:
+    | ((obj: any) => Promise<string>)
+    | undefined;
 
-  private readonly deserializeObjectFn: (<T>(str: string) => T) | undefined;
+  private readonly deserializeObjectFn:
+    | (<T>(str: string) => Promise<T>)
+    | undefined;
 
   // stores the remote state upon initialization
   private readonly remoteRefs:
@@ -298,8 +302,7 @@ export class Repository<T extends { [k: PropertyKey]: any }>
   }
 
   private async moveTo(commit: Commit) {
-    const deserializeFn =
-      this.deserializeObjectFn ?? (await import("./serialize.js")).treeToObject;
+    const deserializeFn = this.deserializeObjectFn ?? defaultDeserializeFn;
     const targetTree = deserializeFn<T>(commit.tree);
     const patchToTarget = compare(this.data, targetTree);
     if (!patchToTarget || patchToTarget.length < 1) {
@@ -394,15 +397,14 @@ export class Repository<T extends { [k: PropertyKey]: any }>
   async diff(shaishFrom: string, shaishTo?: string): Promise<Array<Operation>> {
     const [cFrom] = shaishToCommit(shaishFrom, this.refs, this.commits);
     let target: T;
-    const deserializeFn =
-      this.deserializeObjectFn ?? (await import("./serialize.js")).treeToObject;
+    const deserializeFn = this.deserializeObjectFn ?? defaultDeserializeFn;
     if (shaishTo) {
       const [cTo] = shaishToCommit(shaishTo, this.refs, this.commits);
-      target = deserializeFn(cTo.tree);
+      target = await deserializeFn(cTo.tree);
     } else {
       target = this.data;
     }
-    const targetTree = deserializeFn<T>(cFrom.tree);
+    const targetTree = await deserializeFn<T>(cFrom.tree);
 
     return compare(targetTree, target);
   }
@@ -462,8 +464,7 @@ export class Repository<T extends { [k: PropertyKey]: any }>
         ? parent.changes
         : [];
     const changes = [...parentChanges, ...patch];
-    const calculateCommitHash =
-      this.hashFn ?? (await import("./commit.js")).calculateCommitHash;
+    const calculateCommitHash = this.hashFn ?? defaultHashFn;
 
     const sha = await calculateCommitHash({
       message,
@@ -473,10 +474,9 @@ export class Repository<T extends { [k: PropertyKey]: any }>
       timestamp,
     });
 
-    const serializeFn =
-      this.serializeObjectFn ?? (await import("./serialize.js")).objectToTree;
+    const serializeFn = this.serializeObjectFn ?? defaultSerializeFn;
 
-    const treeHash = serializeFn(this.data);
+    const treeHash = await serializeFn(this.data);
     const commit = {
       hash: sha,
       message,
@@ -682,3 +682,18 @@ export class Repository<T extends { [k: PropertyKey]: any }>
     return tagRef;
   }
 }
+
+const defaultHashFn = async (content: CommitHashContent) => {
+  const fn = (await import("./commit.js")).calculateCommitHash;
+  return fn(content);
+};
+
+const defaultSerializeFn = async (obj: any) => {
+  const fn = (await import("./serialize.js")).objectToTree;
+  return fn(obj);
+};
+
+const defaultDeserializeFn = async <T>(str: string): Promise<T> => {
+  const fn = (await import("./serialize.js")).treeToObject;
+  return fn(str);
+};
