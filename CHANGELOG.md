@@ -1,3 +1,16 @@
+# (Sun Sep 29 2024)
+
+#### 🐛 Bug Fix
+
+- `@dotinc/ogre-react@0.12.1`
+  - fix: export enum from gitgraphjs [#188](https://github.com/dotindustries/ogre/pull/188) ([@nadilas](https://github.com/nadilas))
+
+#### Authors: 1
+
+- [@nadilas](https://github.com/nadilas)
+
+---
+
 # (Sun Jun 23 2024)
 
 #### 🚀 Enhancement

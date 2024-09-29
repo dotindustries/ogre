@@ -1,3 +1,17 @@
+# v0.12.1 (Sun Sep 29 2024)
+
+#### 🐛 Bug Fix
+
+- fix: export enum from gitgraphjs [#188](https://github.com/dotindustries/ogre/pull/188) ([@nadilas](https://github.com/nadilas))
+- chore: fix npm ([@nadilas](https://github.com/nadilas))
+- fix: export enum from gitgraphjs ([@nadilas](https://github.com/nadilas))
+
+#### Authors: 1
+
+- [@nadilas](https://github.com/nadilas)
+
+---
+
 # v0.10.0 (Sun Apr 07 2024)
 
 #### 🚀 Enhancement
