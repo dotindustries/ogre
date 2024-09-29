@@ -12,6 +12,7 @@ import type { Template } from "@gitgraph/core/lib/template";
 
 export {
   templateExtend,
+  TemplateName,
   metroTemplate,
   blackArrowTemplate,
 } from "@gitgraph/core/lib/template";
