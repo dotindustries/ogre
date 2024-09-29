@@ -1,6 +1,6 @@
 {
   "name": "ogre-demo",
-  "version": "0.13.0",
+  "version": "0.13.1",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@dotinc/ogre": "^0.12.0",
-    "@dotinc/ogre-react": "^0.12.0",
+    "@dotinc/ogre-react": "^0.12.1",
     "next": "12.1.0",
     "next-plausible": "^3.12.0",
     "next-transpile-modules": "^9.1.0",
