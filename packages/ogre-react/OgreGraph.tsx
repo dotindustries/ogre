@@ -10,13 +10,6 @@ import {
 } from "@gitgraph/react";
 import type { Template } from "@gitgraph/core/lib/template";
 
-export {
-  templateExtend,
-  TemplateName,
-  metroTemplate,
-  blackArrowTemplate,
-} from "@gitgraph/core/lib/template";
-
 interface GitgraphOptions {
   template?: TemplateName | Template;
   orientation?: Orientation;
