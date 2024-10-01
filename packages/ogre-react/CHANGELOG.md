@@ -1,3 +1,15 @@
+# v0.12.2 (Tue Oct 01 2024)
+
+#### 🐛 Bug Fix
+
+- fix: remove re-exports of gitgraph template ([@nadilas](https://github.com/nadilas))
+
+#### Authors: 1
+
+- [@nadilas](https://github.com/nadilas)
+
+---
+
 # v0.12.1 (Sun Sep 29 2024)
 
 #### 🐛 Bug Fix

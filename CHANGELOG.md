@@ -1,3 +1,16 @@
+# (Tue Oct 01 2024)
+
+#### 🐛 Bug Fix
+
+- `@dotinc/ogre-react@0.12.2`
+  - fix: remove re-exports of gitgraph template ([@nadilas](https://github.com/nadilas))
+
+#### Authors: 1
+
+- [@nadilas](https://github.com/nadilas)
+
+---
+
 # (Sun Sep 29 2024)
 
 #### 🐛 Bug Fix
