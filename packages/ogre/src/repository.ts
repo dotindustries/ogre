@@ -107,6 +107,11 @@ export interface RepositoryObject<T extends { [k: string]: any }> {
    * Cherry returns the commits that are missing from upstream and the refs that have been moved since remote
    */
   cherry(): { commits: Array<Commit>; refs: Map<string, Reference> };
+
+  /**
+   * Runs an arbitrary backend push command and after success advances the locally stored remote state
+   */
+  push(pushToBackendFn: () => Promise<boolean>): Promise<boolean>
 }
 
 /**
@@ -119,12 +124,7 @@ export class Repository<T extends { [k: PropertyKey]: any }>
     this.hashFn = options.overrides?.calculateCommitHashFn;
     this.serializeObjectFn = options.overrides?.serializeObjectFn;
     this.deserializeObjectFn = options.overrides?.deserializeObjectFn;
-    // FIXME: move this to refs/remote as git would do?
-    this.remoteRefs = immutableMapCopy(options.history?.refs);
-    this.remoteCommits = immutableArrayCopy<Commit, string>(
-      options.history?.commits,
-      (c) => c.hash,
-    );
+    options.history && this.storeRemoteState(options.history);
     this.original = deepClone(obj);
     // store js ref, so obj can still be modified without going through repo.data
     this.data = obj as T;
@@ -157,6 +157,15 @@ export class Repository<T extends { [k: PropertyKey]: any }>
     this.moveTo(commit).then(() => {
       this._isReady = true;
     });
+  }
+
+  private storeRemoteState(history: History) {
+    // FIXME: move this to refs/remote as git would do?
+    this.remoteRefs = immutableMapCopy(history.refs);
+    this.remoteCommits = immutableArrayCopy<Commit, string>(
+      history.commits,
+      (c) => c.hash,
+    );
   }
 
   private readonly original: T;
@@ -192,17 +201,25 @@ export class Repository<T extends { [k: PropertyKey]: any }>
     | undefined;
 
   // stores the remote state upon initialization
-  private readonly remoteRefs:
+  private remoteRefs:
     | ReadonlyMap<string, Readonly<Reference>>
     | undefined;
 
   // stores the remote state upon initialization
-  private readonly remoteCommits: ReadonlyArray<Readonly<string>> | undefined;
+  private remoteCommits: ReadonlyArray<Readonly<string>> | undefined;
 
   private observer: Observer<T>;
 
   private readonly refs: Map<string, Reference>;
   private readonly commits: Array<Commit>;
+
+  async push(pushToBackendFn: () => Promise<boolean>): Promise<boolean> {
+    const success = await pushToBackendFn()
+    if (success) {
+      this.storeRemoteState(this.getHistory())
+    }
+    return success
+  }
 
   cherry(): { commits: Array<Commit>; refs: Map<string, Reference> } {
     const commits: Array<Commit> = [];
