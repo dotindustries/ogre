@@ -1,3 +1,16 @@
+# (Fri Nov 08 2024)
+
+#### 🚀 Enhancement
+
+- `@dotinc/ogre@0.13.0`
+  - feat: advance remote state on push [#189](https://github.com/dotindustries/ogre/pull/189) ([@nadilas](https://github.com/nadilas))
+
+#### Authors: 1
+
+- [@nadilas](https://github.com/nadilas)
+
+---
+
 # (Tue Oct 01 2024)
 
 #### 🐛 Bug Fix
