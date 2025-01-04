@@ -1,3 +1,16 @@
+# v0.14.0 (Sat Jan 04 2025)
+
+#### 🚀 Enhancement
+
+- External serialize/deserialize functions [#190](https://github.com/dotindustries/ogre/pull/190) ([@nadilas](https://github.com/nadilas))
+- feat: external serialize/deserialize functions ([@nadilas](https://github.com/nadilas))
+
+#### Authors: 1
+
+- [@nadilas](https://github.com/nadilas)
+
+---
+
 # v0.13.0 (Fri Nov 08 2024)
 
 #### 🚀 Enhancement

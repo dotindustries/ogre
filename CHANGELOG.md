@@ -1,3 +1,16 @@
+# (Sat Jan 04 2025)
+
+#### 🚀 Enhancement
+
+- `@dotinc/ogre@0.14.0`
+  - External serialize/deserialize functions [#190](https://github.com/dotindustries/ogre/pull/190) ([@nadilas](https://github.com/nadilas))
+
+#### Authors: 1
+
+- [@nadilas](https://github.com/nadilas)
+
+---
+
 # (Fri Nov 08 2024)
 
 #### 🚀 Enhancement
