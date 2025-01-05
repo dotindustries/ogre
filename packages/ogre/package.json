@@ -4,7 +4,7 @@
     "type": "git",
     "url": "https://github.com/dotindustries/ogre.git"
   },
-  "version": "0.14.0",
+  "version": "0.15.0",
   "description": "Git-like repository for in-memory object versioning",
   "private": false,
   "main": "lib/index.js",
@@ -30,20 +30,20 @@
   "license": "MIT",
   "dependencies": {
     "fast-json-patch": "^3.1.1",
-    "jsondiffpatch": "^0.6.0",
     "fflate": "^0.8.2",
+    "jsondiffpatch": "^0.6.0",
     "tslib": "^2.6.2"
   },
   "devDependencies": {
     "@types/node": "^20.12.5",
     "@types/uuid": "^8.3.4",
     "nyc": "^15.1.0",
+    "superjson": "^2.2.2",
     "tap": "^18.7.0",
     "ts-node": "^10.8.1",
     "tsx": "^4.7.1",
     "typescript": "^5.4.4",
-    "uuid": "^8.3.2",
-    "superjson": "^2.2.2"
+    "uuid": "^8.3.2"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",

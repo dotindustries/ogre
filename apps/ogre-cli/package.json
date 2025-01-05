@@ -1,6 +1,6 @@
 {
 	"name": "@dotinc/ogre-cli",
-	"version": "0.11.0",
+	"version": "0.12.0",
 	"author": "János Veres @nadilas",
 	"license": "MIT",
 	"bin": "dist/cli.js",
@@ -19,7 +19,7 @@
 		"dist"
 	],
 	"dependencies": {
-		"@dotinc/ogre": "^0.14.0",
+		"@dotinc/ogre": "^0.15.0",
 		"@gitgraph/core": "1.5.0",
 		"chalk": "^5.3.0",
 		"color-convert": "^2.0.1",
