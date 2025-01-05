@@ -1,4 +1,5 @@
 import { test } from "tap";
+import superjson from "superjson";
 
 import { Repository } from "./repository.js";
 import {
@@ -12,6 +13,7 @@ import {
 } from "./test.utils.js";
 import { Reference } from "./interfaces.js";
 import { compare } from "fast-json-patch";
+import {objectToTree, treeToObject} from "./serialize.js";
 
 test("diff is ok", async (t) => {
   const [repo, obj] = await getBaseline();
@@ -44,10 +46,10 @@ test("restore", async (t) => {
   t.test("history check", async (t) => {
     const [repo, wrapped] = await getBaseline();
 
-    let changeEntries = updateHeaderData(wrapped);
+    updateHeaderData(wrapped);
     await repo.commit("header data", testAuthor);
 
-    changeEntries += addOneNested(wrapped);
+    addOneNested(wrapped);
     const firstStep = await repo.commit("first step", testAuthor);
 
     const history = repo.getHistory();
@@ -72,6 +74,62 @@ test("restore", async (t) => {
     t.equal(
       sumChanges(history2.commits),
       sumChanges(history.commits),
+      "incorrect # of changelog entries",
+    );
+  });
+
+  t.test("date stays date", async (t) => {
+    /**
+     * Serialize an object to a string using the Ogre library.
+     * This is useful for storing and retrieving objects in a repository.
+     * @param obj
+     */
+    const serializeObject = async (obj: any) => {
+      return objectToTree(obj, superjson.stringify)
+    }
+
+    /**
+     * Deserialize an object from a string using the Ogre library.
+     * This is useful for retrieving objects from a repository.
+     * @param str
+     */
+    const deserializeObject = async <T>(str: string) => {
+      return treeToObject(str, superjson.parse<T>)
+    }
+
+    const [repo, wrapped] = await getBaseline(
+      undefined,
+      serializeObject,
+        deserializeObject
+    );
+
+    updateHeaderData(wrapped);
+    wrapped.aDate = new Date();
+    await repo.commit("header data", testAuthor);
+
+    t.equal(repo.getHistory().commits.length, 1, "incorrect # of commits");
+
+    const repo2 = new Repository<ComplexObject>(
+      {},
+      {
+        history: repo.getHistory(),
+        overrides: {
+          serializeObjectFn: serializeObject,
+          deserializeObjectFn: deserializeObject
+        },
+      },
+    );
+    await repo2.isReady();
+
+    t.equal(repo2.data.aDate instanceof Date, true, "date is not a date");
+    t.matchStrict(
+      repo2.data,
+      repo.data,
+      "restored object does not equal last version.",
+    );
+    t.equal(
+      sumChanges(repo2.getHistory().commits),
+      sumChanges(repo.getHistory().commits),
       "incorrect # of changelog entries",
     );
   });

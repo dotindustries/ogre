@@ -33,6 +33,7 @@ import {
   validateBranchName,
   validateRef,
 } from "./utils.js";
+import * as jsondiffpatch from 'jsondiffpatch';
 
 export interface RepositoryOptions {
   history?: History;
@@ -321,15 +322,21 @@ export class Repository<T extends { [k: PropertyKey]: any }>
   private async moveTo(commit: Commit) {
     const deserializeFn = this.deserializeObjectFn ?? defaultDeserializeFn;
     const targetTree = await deserializeFn<T>(commit.tree);
-    const patchToTarget = compare(this.data, targetTree);
-    if (!patchToTarget || patchToTarget.length < 1) {
+
+    // using object patching instead of json-patch,
+    // because deserializeFn might use e.g. superjson for extended type support
+    // and json-patch does not support extended types
+    const patchToTarget = jsondiffpatch.diff(this.data, targetTree);
+    if (!patchToTarget) {
       return;
     }
+
     this.observer.unobserve();
-    patchToTarget.reduce(applyReducer, this.data);
+    jsondiffpatch.patch(this.data, patchToTarget);
     this.observer = observe(this.data);
   }
 
+  // FIXME: refactor this to use jsondiffpatch delta instead of json-patch for advanced type support
   apply(patch: Array<Operation>): JsonPatchError | undefined {
     const p = deepClone(patch) as Array<Operation>;
     const err = validate(p, this.data);
@@ -402,6 +409,7 @@ export class Repository<T extends { [k: PropertyKey]: any }>
     return REFS_HEAD_KEY; // detached state
   }
 
+  // FIXME: refactor this to use jsondiffpatch delta instead of json-patch for advanced type support
   async status() {
     const commit = this.commitAtHead();
     if (!commit) {
@@ -411,7 +419,8 @@ export class Repository<T extends { [k: PropertyKey]: any }>
     return this.diff(commit.hash);
   }
 
-  async diff(shaishFrom: string, shaishTo?: string): Promise<Array<Operation>> {
+  // FIXME: refactor this to use jsondiffpatch delta instead of json-patch for advanced type support
+ async diff(shaishFrom: string, shaishTo?: string): Promise<Array<Operation>> {
     const [cFrom] = shaishToCommit(shaishFrom, this.refs, this.commits);
     let target: T;
     const deserializeFn = this.deserializeObjectFn ?? defaultDeserializeFn;
@@ -467,6 +476,7 @@ export class Repository<T extends { [k: PropertyKey]: any }>
       }
     }
 
+    // FIXME: refactor this to use parent tree vs this.data instead to get json-patch
     const patch = generate(this.observer);
     if (
       (patch.length === 0 && !amend) ||
