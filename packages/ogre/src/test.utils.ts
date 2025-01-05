@@ -11,6 +11,7 @@ export type ComplexObject = {
   uuid?: string;
   name?: string;
   description?: string;
+  aDate?: Date;
   nested: NestedObject[];
 };
 
@@ -18,6 +19,8 @@ export const testAuthor = "User name <name@domain.com>";
 
 export async function getBaseline(
   obj?: Partial<ComplexObject>,
+  serializeFn?: (obj: any) => Promise<string>,
+  deserializeFn?: <T>(str: string) => Promise<T>,
 ): Promise<[RepositoryObject<ComplexObject>, ComplexObject]> {
   const co: ComplexObject = {
     uuid: undefined,
@@ -26,7 +29,14 @@ export async function getBaseline(
     nested: [],
     ...obj,
   };
-  const repo = new Repository(co, {});
+  const repo = new Repository(co, {
+    overrides: serializeFn &&
+      deserializeFn && {
+        calculateCommitHashFn: undefined,
+        serializeObjectFn: serializeFn,
+        deserializeObjectFn: deserializeFn,
+      },
+  });
   return [repo, co];
 }
 
