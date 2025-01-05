@@ -1,3 +1,39 @@
+# (Sun Jan 05 2025)
+
+### Release Notes
+
+#### fix: update extended type support ([#191](https://github.com/dotindustries/ogre/pull/191))
+
+- **Dependencies**
+	- Added `jsondiffpatch` library for advanced object diffing
+	- Added `superjson` library for enhanced object serialization
+
+- **New Features**
+	- Improved object serialization and deserialization support
+	- Enhanced date handling in object comparisons
+
+- **Testing**
+	- Added new test cases to verify object serialization integrity
+	- Expanded test utility functions to support more complex object scenarios
+
+- **Refactoring**
+	- Updated repository methods to use more sophisticated patching techniques
+
+<!-- end of auto-generated comment: release notes by coderabbit.ai -->
+
+---
+
+#### 🚀 Enhancement
+
+- `@dotinc/ogre@0.15.0`
+  - fix: update extended type support [#191](https://github.com/dotindustries/ogre/pull/191) ([@nadilas](https://github.com/nadilas))
+
+#### Authors: 1
+
+- [@nadilas](https://github.com/nadilas)
+
+---
+
 # (Sat Jan 04 2025)
 
 #### 🚀 Enhancement
