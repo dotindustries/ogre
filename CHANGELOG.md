@@ -1,3 +1,16 @@
+# (Sat Mar 29 2025)
+
+#### 🐛 Bug Fix
+
+- `@dotinc/ogre@0.15.1`
+  - Fix reset function [#192](https://github.com/dotindustries/ogre/pull/192) ([@nadilas](https://github.com/nadilas))
+
+#### Authors: 1
+
+- [@nadilas](https://github.com/nadilas)
+
+---
+
 # (Sun Jan 05 2025)
 
 ### Release Notes

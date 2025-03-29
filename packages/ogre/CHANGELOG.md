@@ -1,3 +1,17 @@
+# v0.15.1 (Sat Mar 29 2025)
+
+#### 🐛 Bug Fix
+
+- Fix reset function [#192](https://github.com/dotindustries/ogre/pull/192) ([@nadilas](https://github.com/nadilas))
+- refactor: type imports ([@nadilas](https://github.com/nadilas))
+- fix: reset function ([@nadilas](https://github.com/nadilas))
+
+#### Authors: 1
+
+- [@nadilas](https://github.com/nadilas)
+
+---
+
 # v0.15.0 (Sun Jan 05 2025)
 
 ### Release Notes
