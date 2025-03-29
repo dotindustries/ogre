@@ -5,13 +5,13 @@ import { Repository } from "./repository.js";
 import {
   addOneStep,
   addOneStep as addOneNested,
-  ComplexObject,
+  type ComplexObject,
   getBaseline,
   sumChanges,
   testAuthor,
   updateHeaderData,
 } from "./test.utils.js";
-import { Reference } from "./interfaces.js";
+import type {Reference} from "./interfaces.js";
 import { compare } from "fast-json-patch";
 import {objectToTree, treeToObject} from "./serialize.js";
 
@@ -60,6 +60,13 @@ test("restore", async (t) => {
       "main is pointing at wrong commit",
     );
     t.equal(history.commits.length, 2, "incorrect # of commits");
+    const logs = repo.logs()
+    t.equal(logs.length, 3, "incorrect # of logs")
+    const logs1 = repo.logs(1)
+    t.equal(logs1.length, 1, "incorrect # of logs retrieved")
+
+    const logs2 = repo.logs(100)
+    t.equal(logs2.length, 3, "incorrect # of logs retrieved")
 
     // start reconstruction
     const p = {};
@@ -280,7 +287,7 @@ test("history", async (t) => {
 });
 
 test("reset", async (t) => {
-  t.test("reset hard", async (t) => {
+  t.test("discard uncommitted changes", async (t) => {
     const [repo, co] = await getBaseline();
     co.uuid = "asdf";
     const hash = await repo.commit("baseline", testAuthor);
@@ -292,10 +299,60 @@ test("reset", async (t) => {
     t.equal(diff.length, changes, "wrong # of changes in diff");
 
     // reset
-    repo.reset("hard");
+    await repo.reset("hard");
     const diff2 = await repo.diff(hash);
     t.equal(diff2.length, 0, "failed to reset");
   });
+
+  t.test("reset to earlier commit", async t => {
+    const [repo, co] = await getBaseline();
+    co.uuid = "asdf";
+    const hash = await repo.commit("baseline", testAuthor);
+    const h1 = repo.getHistory();
+    t.equal(h1.commits.length, 1);
+
+    // do changes
+    const changes = updateHeaderData(co);
+    const hash2 = await repo.commit("header data", testAuthor);
+    const h2 = repo.getHistory();
+    t.equal(h2.commits.length, 2);
+    const diff = await repo.diff(hash);
+    t.equal(diff.length, changes, "wrong # of changes in diff");
+    t.equal(hash !== hash2, true, "hash should not be the same");
+
+    // reset
+    await repo.reset("hard", hash);
+    const diff2 = await repo.diff(hash);
+    t.equal(diff2.length, 0, "failed to reset");
+    const h3 = repo.getHistory()
+    t.equal(h3.refs.get("refs/heads/main")!.value, hash, "main should point to first hash");
+  })
+
+  t.test("reset to earlier version tag", async t => {
+    const [repo, co] = await getBaseline();
+    co.uuid = "asdf";
+    const hash = await repo.commit("baseline", testAuthor);
+    repo.tag("v0.1.0")
+    const h1 = repo.getHistory();
+    t.equal(h1.commits.length, 1);
+
+    // do changes
+    const changes = updateHeaderData(co);
+    const hash2 = await repo.commit("header data", testAuthor);
+    repo.tag("v0.2.0")
+    const h2 = repo.getHistory();
+    t.equal(h2.commits.length, 2);
+    const diff = await repo.diff(hash);
+    t.equal(diff.length, changes, "wrong # of changes in diff");
+    t.equal(hash !== hash2, true, "hash should not be the same");
+
+    // reset
+    await repo.reset("hard", "v0.1.0");
+    const diff2 = await repo.diff(hash);
+    t.equal(diff2.length, 0, "failed to reset");
+    const h3 = repo.getHistory()
+    t.equal(h3.refs.get("refs/heads/main")!.value, hash, "main should point to first hash");
+  })
 });
 
 test("status", async (t) => {

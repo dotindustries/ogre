@@ -1,9 +1,10 @@
 // [RFC5322](https://www.ietf.org/rfc/rfc5322.txt)
-import { Commit } from "./commit.js";
-import { Reference } from "./interfaces.js";
+// [RFC5322](https://www.ietf.org/rfc/rfc5322.txt)
+import type {Commit} from "./commit.js";
+import type {Reference} from "./interfaces.js";
 import { validBranch, validRef } from "./ref.js";
-import { deepClone, Operation } from "fast-json-patch";
-import { RepositoryObject } from "./repository.js";
+import { deepClone, type Operation } from "fast-json-patch";
+import type {RepositoryObject} from "./repository.js";
 
 const emailRegex =
   /(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9]))\.){3}(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9])|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/;
@@ -122,15 +123,29 @@ export const commitAtRefIn = (
 export const refsAtCommit = (
   references: Map<string, Reference>,
   commit: Commit,
-) => {
+): Array<Reference> => {
   const list: Array<Reference> = [];
-  for (const [name, ref] of references.entries()) {
+  for (const [_, ref] of references.entries()) {
     if (ref.value === commit.hash) {
       list.push(ref);
     }
   }
   return list;
 };
+
+export const refKeysAtCommit = (
+    references: Map<string, Reference>,
+    commit: Commit,
+): Array<string> => {
+    const list: Array<string> = [];
+    for (const [name, ref] of references.entries()) {
+        if (ref.value === commit.hash) {
+            list.push(name);
+        }
+    }
+    return list;
+}
+
 /**
  * Accepts a shaish expression (e.g. refs (branches, tags), commitSha) and returns
  * - a commit of type Commit
@@ -215,10 +230,14 @@ export const printChangeLog = <T extends { [k: string]: any }>(
   }
   let c: Commit | undefined = head;
   while (c) {
+    let refs = refsAtCommit(history.refs, c)
+        .map((r) => `[${r.name}]`)
+        .join(" ")
+    if (c.hash === head.hash) {
+      refs = `[HEAD] ${refs}`
+    }
     console.log(
-      `${c.hash} ${refsAtCommit(history.refs, c)
-        .map((r) => r.name)
-        .join(" ")}`,
+      `${c.hash} ${refs}`,
     );
     for (const chg of c.changes) {
       printChange(chg);

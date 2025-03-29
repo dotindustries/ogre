@@ -1,5 +1,5 @@
-import { Commit } from "./commit.js";
-import { History, Reference } from "./interfaces.js";
+import type {Commit} from "./commit.js";
+import type {History, Reference} from "./interfaces.js";
 import {
   cleanAuthor,
   createHeadRefValue,
