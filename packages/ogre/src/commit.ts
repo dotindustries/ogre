@@ -1,5 +1,5 @@
 import { digest } from "./hash.js";
-import { Operation } from "fast-json-patch";
+import type {Operation} from "fast-json-patch";
 
 export interface Commit {
   /*The hash of the commit. Is a sha256 of:
