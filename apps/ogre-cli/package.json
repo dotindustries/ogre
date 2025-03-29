@@ -29,7 +29,7 @@
 	"devDependencies": {
 		"@sindresorhus/tsconfig": "^3.0.1",
 		"@types/color-convert": "^2.0.3",
-		"@types/lodash": "^4.14.202",
+		"@types/lodash": "^4.17.0",
 		"@types/node": "^20.12.5",
 		"@types/react": "^18.0.32",
 		"@vdemedes/prettier-config": "^2.0.1",
