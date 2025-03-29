@@ -5,13 +5,13 @@ import { Repository } from "./repository.js";
 import {
   addOneStep,
   addOneStep as addOneNested,
-  ComplexObject,
+  type ComplexObject,
   getBaseline,
   sumChanges,
   testAuthor,
   updateHeaderData,
 } from "./test.utils.js";
-import { Reference } from "./interfaces.js";
+import type {Reference} from "./interfaces.js";
 import { compare } from "fast-json-patch";
 import {objectToTree, treeToObject} from "./serialize.js";
 

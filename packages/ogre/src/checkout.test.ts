@@ -1,7 +1,7 @@
 import { test } from "tap";
 import {
   addOneStep,
-  ComplexObject,
+  type ComplexObject,
   getBaseline,
   sumChanges,
   testAuthor,

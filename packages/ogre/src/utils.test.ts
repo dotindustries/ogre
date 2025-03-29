@@ -1,7 +1,7 @@
 import { test } from "tap";
 import { cleanAuthor, mapPath, shaishToCommit } from "./utils.js";
 import { Repository } from "./repository.js";
-import { ComplexObject, testAuthor } from "./test.utils.js";
+import {type ComplexObject, testAuthor } from "./test.utils.js";
 
 test("author <email@domain.info>", (t) => {
   const [name, email] = cleanAuthor("author <email@domain.info>");
