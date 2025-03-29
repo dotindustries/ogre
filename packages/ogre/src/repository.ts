@@ -1,13 +1,12 @@
 import {
   applyPatch,
-  applyReducer,
   compare,
   deepClone,
   generate,
   JsonPatchError,
   observe,
-  Observer,
-  Operation,
+  type Observer,
+  type Operation,
   unobserve,
   validate,
 } from "fast-json-patch";
@@ -22,12 +21,12 @@ import {
   headValueRefPrefix,
   immutableArrayCopy,
   immutableMapCopy,
+  refKeysAtCommit,
   localHeadPathPrefix,
   mapPath,
   mutableMapCopy,
   REFS_HEAD_KEY,
   REFS_MAIN_KEY,
-  refsAtCommit,
   shaishToCommit,
   tagToRef,
   validateBranchName,
@@ -380,14 +379,16 @@ export class Repository<T extends { [k: PropertyKey]: any }>
     const [commit] = shaishToCommit(shaish, this.refs, this.commits);
     await this.moveTo(commit);
 
-    const refs = refsAtCommit(this.refs, commit);
+    const commitAtHEAD = this.mustCommitAtHead()
+    const refs = refKeysAtCommit(this.refs, commitAtHEAD);
+
     // reset only moves heads and not tags
-    const moveableRefs = refs.filter((r) =>
-      r.name.startsWith(localHeadPathPrefix()),
+    const moveableRefs = refs.filter((ref) =>
+      ref.startsWith(localHeadPathPrefix()),
     );
 
     for (const ref of moveableRefs) {
-      this.moveRef(ref.name, commit);
+      this.moveRef(ref, commit);
     }
 
     if (mode === "hard") {
