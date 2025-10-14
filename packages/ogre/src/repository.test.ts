@@ -843,4 +843,42 @@ test("pending changes - push helpers", async (t) => {
       "wrong pending ref update",
     );
   });
+
+  t.test("local remote state is updated after push", async (t) => {
+    const [repo, obj] = await getBaseline();
+    updateHeaderData(obj);
+    const c1 = await repo.commit("header data", testAuthor);
+    addOneNested(obj);
+    const c2 = await repo.commit("first nested", testAuthor);
+    repo.tag("v0.1.0");
+    const history = repo.getHistory();
+    const cm1 = history.commits.find((c) => c.hash === c1);
+    const cm2 = history.commits.find((c) => c.hash === c2);
+
+    const pending = repo.cherry();
+    t.equal(pending.commits.length, 2, "incorrect number of pending commits");
+    t.equal(pending.refs.size, 2, `incorrect number of pending ref updates`);
+    t.matchOnlyStrict(
+      pending.commits,
+      [cm2, cm1],
+      "wrong pending commits",
+    );
+    t.matchOnlyStrict(
+      pending.refs.keys(),
+      ["refs/heads/main", "refs/tags/v0.1.0"],
+      "wrong pending ref update",
+    );
+
+    const remote = repo.remote()
+    console.log("local remote state is updated after push");
+    await repo.push(() => Promise.resolve(true))
+    const remote2 = repo.remote()
+    t.notMatchOnlyStrict(remote, remote2, "remote should be different after push")
+    // now test push
+
+  })
+
+  // t.test("history returns all commits from all branches", async t => {
+  //   t.fail("TODO: implement commits to be gathered from all refs, not just from the HEAD backwards")
+  // })
 });
