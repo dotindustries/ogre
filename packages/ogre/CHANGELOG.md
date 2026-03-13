@@ -1,3 +1,20 @@
+# v0.15.2 (Fri Mar 13 2026)
+
+#### 🐛 Bug Fix
+
+- fix: overwritable timestamp function for temporal.io compatibility ([@nadilas](https://github.com/nadilas))
+- fix: history should always start from the top ([@nadilas](https://github.com/nadilas))
+
+#### ⚠️ Pushed to `main`
+
+- test: add covering test for remote state update ([@nadilas](https://github.com/nadilas))
+
+#### Authors: 1
+
+- [@nadilas](https://github.com/nadilas)
+
+---
+
 # v0.15.1 (Sat Mar 29 2025)
 
 #### 🐛 Bug Fix
