@@ -40,6 +40,7 @@ export interface RepositoryOptions {
     calculateCommitHashFn?: (content: CommitHashContent) => Promise<string>;
     serializeObjectFn?: (obj: any) => Promise<string>;
     deserializeObjectFn?: <T>(str: string) => Promise<T>;
+    timestampFn?: () => Date;
   };
 }
 
@@ -121,9 +122,13 @@ export class Repository<T extends { [k: PropertyKey]: any }>
   implements RepositoryObject<T>
 {
   constructor(obj: Partial<T>, options: RepositoryOptions) {
+    this._readyPromise = new Promise<boolean>((resolve) => {
+      this._resolveReady = resolve;
+    });
     this.hashFn = options.overrides?.calculateCommitHashFn;
     this.serializeObjectFn = options.overrides?.serializeObjectFn;
     this.deserializeObjectFn = options.overrides?.deserializeObjectFn;
+    this.timestampFn = options.overrides?.timestampFn;
     options.history && this.storeRemoteState(options.history);
     this.original = deepClone(obj);
     // store js ref, so obj can still be modified without going through repo.data
@@ -144,18 +149,18 @@ export class Repository<T extends { [k: PropertyKey]: any }>
     this.commits = options.history?.commits ?? [];
 
     if (!options.history) {
-      this._isReady = true;
+      this._resolveReady(true);
       return;
     }
 
     // restore history
     const commit = this.commitAtHead();
     if (!commit) {
-      this._isReady = true;
+      this._resolveReady(true);
       return;
     }
     this.moveTo(commit).then(() => {
-      this._isReady = true;
+      this._resolveReady(true);
     });
   }
 
@@ -169,22 +174,11 @@ export class Repository<T extends { [k: PropertyKey]: any }>
   }
 
   private readonly original: T;
-  private _isReady = false;
+  private _readyPromise: Promise<boolean>;
+  private _resolveReady!: (value: boolean) => void;
 
   isReady(): Promise<boolean> {
-    const self = this;
-
-    function checkFlag(callback: (ok: boolean) => void) {
-      if (self._isReady === true) {
-        callback(true);
-      } else {
-        setTimeout(() => checkFlag(callback), 10);
-      }
-    }
-
-    return new Promise((resolve) => {
-      checkFlag(resolve);
-    });
+    return this._readyPromise;
   }
 
   data: T;
@@ -199,6 +193,8 @@ export class Repository<T extends { [k: PropertyKey]: any }>
   private readonly deserializeObjectFn:
     | (<T>(str: string) => Promise<T>)
     | undefined;
+
+  private readonly timestampFn: (() => Date) | undefined;
 
   // stores the remote state upon initialization
   private remoteRefs:
@@ -486,7 +482,7 @@ export class Repository<T extends { [k: PropertyKey]: any }>
       throw new Error(`no changes to commit`);
     }
 
-    const timestamp = new Date();
+    const timestamp = this.timestampFn ? this.timestampFn() : new Date();
     const parentChanges =
       amend && parent && (parent.changes?.length ?? 0 > 0)
         ? parent.changes
