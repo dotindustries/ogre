@@ -564,8 +564,7 @@ export class Repository<T extends { [k: PropertyKey]: any }>
   }
 
   // region History functions
-  private collectCommits() {
-    const commit = this.commitAtHead();
+  private collectCommits(commit?: Commit) {
     if (!commit) {
       return [];
     }
@@ -582,7 +581,7 @@ export class Repository<T extends { [k: PropertyKey]: any }>
   getHistory(): History {
     return {
       refs: new Map(this.refs),
-      commits: this.collectCommits(),
+      commits: this.collectCommits(this.commitAtHead()),
     };
   }
 
