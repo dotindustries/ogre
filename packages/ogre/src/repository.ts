@@ -2,12 +2,8 @@ import {
   applyPatch,
   compare,
   deepClone,
-  generate,
   JsonPatchError,
-  observe,
-  type Observer,
   type Operation,
-  unobserve,
   validate,
 } from "fast-json-patch";
 import type { Commit, CommitHashContent } from "./commit.js";
@@ -133,7 +129,7 @@ export class Repository<T extends { [k: PropertyKey]: any }>
     this.original = deepClone(obj);
     // store js ref, so obj can still be modified without going through repo.data
     this.data = obj as T;
-    this.observer = observe(obj as T);
+    this._snapshot = deepClone(obj) as T;
     this.refs = options.history?.refs
       ? mutableMapCopy(options.history?.refs)
       : new Map<string, Reference>([
@@ -204,7 +200,7 @@ export class Repository<T extends { [k: PropertyKey]: any }>
   // stores the remote state upon initialization
   private remoteCommits: ReadonlyArray<Readonly<string>> | undefined;
 
-  private observer: Observer<T>;
+  private _snapshot: T;
 
   private readonly refs: Map<string, Reference>;
   private readonly commits: Array<Commit>;
@@ -326,9 +322,8 @@ export class Repository<T extends { [k: PropertyKey]: any }>
       return;
     }
 
-    this.observer.unobserve();
     jsondiffpatch.patch(this.data, patchToTarget);
-    this.observer = observe(this.data);
+    this._snapshot = deepClone(this.data);
   }
 
   // FIXME: refactor this to use jsondiffpatch delta instead of json-patch for advanced type support
@@ -368,10 +363,6 @@ export class Repository<T extends { [k: PropertyKey]: any }>
     mode: "soft" | "hard" | undefined = "hard",
     shaish: string | undefined = REFS_HEAD_KEY,
   ): Promise<void> {
-    if (mode === "hard") {
-      unobserve(this.data, this.observer);
-    }
-
     const [commit] = shaishToCommit(shaish, this.refs, this.commits);
     await this.moveTo(commit);
 
@@ -385,10 +376,6 @@ export class Repository<T extends { [k: PropertyKey]: any }>
 
     for (const ref of moveableRefs) {
       this.moveRef(ref, commit);
-    }
-
-    if (mode === "hard") {
-      this.observer = observe(this.data);
     }
   }
 
@@ -473,14 +460,14 @@ export class Repository<T extends { [k: PropertyKey]: any }>
       }
     }
 
-    // FIXME: refactor this to use parent tree vs this.data instead to get json-patch
-    const patch = generate(this.observer);
+    const patch = compare(this._snapshot, this.data);
     if (
       (patch.length === 0 && !amend) ||
       (amend && message === parent?.message)
     ) {
       throw new Error(`no changes to commit`);
     }
+    this._snapshot = deepClone(this.data);
 
     const timestamp = this.timestampFn ? this.timestampFn() : new Date();
     const parentChanges =
