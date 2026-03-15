@@ -1,3 +1,15 @@
+# v0.15.3 (Sun Mar 15 2026)
+
+#### 🐛 Bug Fix
+
+- fix: replace observe/generate with snapshot compare to eliminate clearTimeout side effects ([@nadilas](https://github.com/nadilas))
+
+#### Authors: 1
+
+- [@nadilas](https://github.com/nadilas)
+
+---
+
 # v0.15.2 (Fri Mar 13 2026)
 
 #### 🐛 Bug Fix
