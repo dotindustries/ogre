@@ -24,6 +24,7 @@ import {
   REFS_HEAD_KEY,
   REFS_MAIN_KEY,
   shaishToCommit,
+  isTagRef,
   tagToRef,
   validateBranchName,
   validateRef,
@@ -435,10 +436,9 @@ export class Repository<T extends { [k: PropertyKey]: any }>
         this.commits,
       );
       await this.moveTo(commit);
-      this.moveRef(
-        REFS_HEAD_KEY,
-        isRef && refKey !== undefined ? refKey : commit,
-      );
+      // Only follow branch refs. Tags produce detached HEAD (like git).
+      const isBranchRef = isRef && refKey !== undefined && !isTagRef(refKey);
+      this.moveRef(REFS_HEAD_KEY, isBranchRef ? refKey : commit);
     }
   }
 

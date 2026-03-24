@@ -109,6 +109,50 @@ test("checkout and create new branch with at least 1 commit", async (t) => {
   );
 });
 
+test("checkout tag leaves HEAD detached", async (t) => {
+  const [repo] = await getBaseline();
+  repo.data.name = "new name";
+  const commitHash = await repo.commit("tagged change", testAuthor);
+  repo.tag("1.0.0");
+
+  // Move main forward so tag and main diverge
+  repo.data.description = "newer change";
+  await repo.commit("after tag", testAuthor);
+
+  // Checkout the tag
+  await repo.checkout("1.0.0");
+  t.equal(repo.branch(), "HEAD", "HEAD should be detached after tag checkout");
+  t.equal(repo.head(), commitHash, "HEAD should point to tagged commit hash");
+});
+
+test("commit after tag checkout does not move tag", async (t) => {
+  const [repo] = await getBaseline();
+  repo.data.name = "tagged";
+  const taggedCommit = await repo.commit("tagged change", testAuthor);
+  repo.tag("1.0.0");
+
+  await repo.checkout("1.0.0");
+
+  // Commit on detached HEAD
+  repo.data.description = "detached work";
+  const detachedCommit = await repo.commit("detached commit", testAuthor);
+
+  // Tag should NOT have moved
+  t.equal(
+    repo.ref("refs/tags/1.0.0"),
+    taggedCommit,
+    "tag should still point to original commit",
+  );
+  // HEAD should point to the new detached commit
+  t.equal(repo.head(), detachedCommit, "HEAD should point to detached commit");
+  // refs/heads/main should not have changed
+  t.equal(
+    repo.ref("refs/heads/main"),
+    taggedCommit,
+    "main should not move",
+  );
+});
+
 test("replacing default branch on empty master removes main", async (t) => {
   const cx: ComplexObject = {
     nested: [],
