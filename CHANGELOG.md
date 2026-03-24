@@ -1,3 +1,16 @@
+# (Tue Mar 24 2026)
+
+#### 🐛 Bug Fix
+
+- `@dotinc/ogre@0.15.4`
+  - fix: tags shouldn't be moved with detached HEAD ([@nadilas](https://github.com/nadilas))
+
+#### Authors: 1
+
+- [@nadilas](https://github.com/nadilas)
+
+---
+
 # (Sun Mar 15 2026)
 
 #### 🐛 Bug Fix

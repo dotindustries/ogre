@@ -1,3 +1,15 @@
+# v0.15.4 (Tue Mar 24 2026)
+
+#### 🐛 Bug Fix
+
+- fix: tags shouldn't be moved with detached HEAD ([@nadilas](https://github.com/nadilas))
+
+#### Authors: 1
+
+- [@nadilas](https://github.com/nadilas)
+
+---
+
 # v0.15.3 (Sun Mar 15 2026)
 
 #### 🐛 Bug Fix
