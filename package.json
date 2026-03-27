@@ -25,7 +25,7 @@
     "@auto-it/microsoft-teams": "^11.0.7",
     "@auto-it/npm": "^11.0.7",
     "@auto-it/released": "^11.0.7",
-    "auto": "^11.0.7",
+    "auto": "^11.1.6",
     "dotenv-cli": "^7.3.0",
     "prettier": "^3.2.5",
     "turbo": "latest",
